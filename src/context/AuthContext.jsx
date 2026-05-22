@@ -113,11 +113,46 @@ export function AuthProvider({ children }) {
       });
   }, [restoreAdminSession]);
 
+  // Register auth error handler to surface token refresh failures
+  useEffect(() => {
+    googleAuth.setAuthErrorCallback((err) => {
+      setError(err.message);
+      setUser(null);
+      setFolderIds(null);
+      setSpreadsheetId(null);
+      clearFolderCache();
+      clearSheetCache();
+      clearAdminSession();
+    });
+
+    return () => {
+      googleAuth.setAuthErrorCallback(null);
+    };
+  }, []);
+
   /** Handle successful token acquisition from Google sign-in. */
   const handleSignInSuccess = useCallback(async (tokenResponse) => {
     try {
       setLoading(true);
       setError(null);
+
+      // Verify required scopes were granted (Google's granular consent
+      // allows users to deselect individual permissions)
+      const grantedScopes = tokenResponse.scope || '';
+      const hasDriveScope = grantedScopes.includes('drive.file') || grantedScopes.includes('drive');
+      const hasSheetsScope = grantedScopes.includes('spreadsheets');
+
+      if (!hasDriveScope || !hasSheetsScope) {
+        const missing = [];
+        if (!hasDriveScope) missing.push('Google Drive');
+        if (!hasSheetsScope) missing.push('Google Sheets');
+        setError(
+          `Access to ${missing.join(' and ')} was not granted. ` +
+          'Please sign in again and allow all requested permissions.'
+        );
+        setLoading(false);
+        return;
+      }
 
       googleAuth.setAccessToken(
         tokenResponse.access_token,
