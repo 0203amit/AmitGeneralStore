@@ -6,6 +6,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import Navbar from './components/shared/Navbar';
 import LoadingSpinner from './components/shared/LoadingSpinner';
 import UploadPage from './components/upload/UploadPage';
+import DriveTestPage from './components/upload/DriveTestPage';
 import HistoryPage from './components/history/HistoryPage';
 import RecordDetail from './components/history/RecordDetail';
 import DashboardPage from './components/dashboard/DashboardPage';
@@ -88,6 +89,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <ProtectedLayout><SettingsPage /></ProtectedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drive-test"
+        element={
+          <ProtectedRoute>
+            <ProtectedLayout><DriveTestPage /></ProtectedLayout>
           </ProtectedRoute>
         }
       />

@@ -13,18 +13,22 @@ const PAYMENT_MODE_COLORS = {
   gpay: 'bg-blue-100 text-blue-700',
   phonepe: 'bg-purple-100 text-purple-700',
   paytm: 'bg-cyan-100 text-cyan-700',
-  net_banking: 'bg-emerald-100 text-emerald-700',
+  neft: 'bg-emerald-100 text-emerald-700',
+  rtgs: 'bg-teal-100 text-teal-700',
   card: 'bg-orange-100 text-orange-700',
   other: 'bg-slate-100 text-slate-600',
+  net_banking: 'bg-emerald-100 text-emerald-700',
 };
 
 const PAYMENT_MODE_LABELS = {
   gpay: 'GPay',
   phonepe: 'PhonePe',
   paytm: 'Paytm',
-  net_banking: 'Net Banking',
+  neft: 'NEFT',
+  rtgs: 'RTGS',
   card: 'Card',
   other: 'Other',
+  net_banking: 'Net Banking',
 };
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];

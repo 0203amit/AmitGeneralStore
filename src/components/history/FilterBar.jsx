@@ -18,7 +18,8 @@ const PAYMENT_MODES = [
   { value: 'gpay', label: 'GPay' },
   { value: 'phonepe', label: 'PhonePe' },
   { value: 'paytm', label: 'Paytm' },
-  { value: 'net_banking', label: 'Net Banking' },
+  { value: 'neft', label: 'NEFT' },
+  { value: 'rtgs', label: 'RTGS' },
   { value: 'card', label: 'Card' },
   { value: 'other', label: 'Other' },
 ];

@@ -16,6 +16,7 @@ export const DRIVE_PAYMENTS_FOLDER = 'payments';
 // Google Sheet name
 export const SHEET_NAME = `${BUSINESS_NAME} - Receipt Database`;
 export const SHEET_WORKSHEET = 'records';
+export const ADMIN_USERS_WORKSHEET = 'admin_users';
 
 // Export file naming patterns
 export const CSV_FILENAME_PREFIX = 'amit_general_store_receipts';

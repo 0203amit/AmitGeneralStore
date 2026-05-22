@@ -19,9 +19,11 @@ const PAYMENT_MODE_LABELS = {
   gpay: 'GPay',
   phonepe: 'PhonePe',
   paytm: 'Paytm',
-  net_banking: 'Net Banking',
+  neft: 'NEFT',
+  rtgs: 'RTGS',
   card: 'Card',
   other: 'Other',
+  net_banking: 'Net Banking',
 };
 
 const PAGE_WIDTH = 210;
@@ -113,7 +115,12 @@ function addCoverPage(doc, record, generatedAt) {
   y += 5;
 
   // Payment details
-  y = drawLabelValue(doc, 'UTR Number:', field(record.utr_number), MARGIN, y, labelWidth);
+  if (record.payment_mode === 'gpay') {
+    y = drawLabelValue(doc, 'UPI Txn ID:', field(record.upi_transaction_id), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, 'Google Txn ID:', field(record.google_transaction_id), MARGIN, y, labelWidth);
+  } else {
+    y = drawLabelValue(doc, 'UTR Number:', field(record.utr_number), MARGIN, y, labelWidth);
+  }
   y = drawLabelValue(doc, 'Payment Date:', formatDisplayDate(record.payment_date) || 'N/A', MARGIN, y, labelWidth);
   y = drawLabelValue(doc, 'Payment Mode:', PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode), MARGIN, y, labelWidth);
   y = drawLabelValue(doc, 'Paid Amount:', record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : 'N/A', MARGIN, y, labelWidth);
@@ -210,7 +217,12 @@ function addSummaryPage(doc, record, generatedAt) {
     ['Bill Date', formatDisplayDate(record.bill_date) || 'N/A'],
     ['Bill Amount', record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : 'N/A'],
     ['Currency', field(record.currency)],
-    ['UTR Number', field(record.utr_number)],
+    ...(record.payment_mode === 'gpay'
+      ? [
+          ['UPI Transaction ID', field(record.upi_transaction_id)],
+          ['Google Transaction ID', field(record.google_transaction_id)],
+        ]
+      : [['UTR Number', field(record.utr_number)]]),
     ['Payment Date', formatDisplayDate(record.payment_date) || 'N/A'],
     ['Payment Mode', PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode)],
     ['Paid Amount', record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : 'N/A'],
@@ -422,6 +434,8 @@ export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFie
     paid_amount: paymentFields.paid_amount || '',
     payer_name: paymentFields.payer_name || '',
     payee_name: paymentFields.payee_name || '',
+    upi_transaction_id: paymentFields.upi_transaction_id || '',
+    google_transaction_id: paymentFields.google_transaction_id || '',
     bill_image_file_id: billFileId,
     bill_image_url: billWebViewLink,
     payment_image_file_id: paymentFileId,
@@ -568,7 +582,12 @@ export function generatePlainTextSummary(record) {
     `Bill Date: ${formatDisplayDate(record.bill_date) || 'N/A'}`,
     `Amount: ${record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : 'N/A'}`,
     `Payment Mode: ${PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode)}`,
-    `UTR Number: ${field(record.utr_number)}`,
+    ...(record.payment_mode === 'gpay'
+      ? [
+          `UPI Transaction ID: ${field(record.upi_transaction_id)}`,
+          `Google Transaction ID: ${field(record.google_transaction_id)}`,
+        ]
+      : [`UTR Number: ${field(record.utr_number)}`]),
     `Payment Date: ${formatDisplayDate(record.payment_date) || 'N/A'}`,
     `--- ${BUSINESS_NAME} ---`,
   ];

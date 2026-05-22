@@ -94,6 +94,30 @@ export function getPresetRange(preset) {
 }
 
 /**
+ * Convert a YYYY-MM-DD date string to DD/MM/YYYY for display in text inputs.
+ * @param {string} isoDate - Date in YYYY-MM-DD format
+ * @returns {string} Date in DD/MM/YYYY format, or original string if invalid
+ */
+export function toDateInputDisplay(isoDate) {
+  if (!isoDate) return '';
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return isoDate;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+/**
+ * Convert a DD/MM/YYYY date string back to YYYY-MM-DD for storage.
+ * @param {string} displayDate - Date in DD/MM/YYYY format
+ * @returns {string} Date in YYYY-MM-DD format, or original string if invalid
+ */
+export function fromDateInputDisplay(displayDate) {
+  if (!displayDate) return '';
+  const match = displayDate.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return displayDate;
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
+/**
  * Format a number as Indian Rupee currency (e.g., "4,250.00").
  * @param {string|number} amount
  * @returns {string}

@@ -1,12 +1,13 @@
 import useAuth from '../../hooks/useAuth';
 import { SIGN_IN_HEADLINE, SIGN_IN_SUBHEADLINE } from '../../config/branding';
+import AdminLoginForm from './AdminLoginForm';
 
 /**
- * Google-branded sign-in button with store headline and subheadline.
- * Displays on the landing page for unauthenticated users.
+ * Landing page sign-in section with Google sign-in button
+ * and optional admin login form (shown when Service Account is configured).
  */
 export default function SignInButton() {
-  const { signIn, loading } = useAuth();
+  const { signIn, loading, isAdminLoginAvailable } = useAuth();
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -44,6 +45,18 @@ export default function SignInButton() {
         </svg>
         {loading ? 'Loading...' : 'Sign in with Google'}
       </button>
+
+      {isAdminLoginAvailable && (
+        <>
+          <div className="flex w-full max-w-xs items-center gap-3">
+            <div className="h-px flex-1 bg-slate-300" />
+            <span className="text-sm text-slate-400">or</span>
+            <div className="h-px flex-1 bg-slate-300" />
+          </div>
+
+          <AdminLoginForm />
+        </>
+      )}
     </div>
   );
 }

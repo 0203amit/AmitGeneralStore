@@ -4,7 +4,7 @@
  */
 import { SHEET_NAME, SHEET_WORKSHEET } from '../config/branding';
 
-/** All 31 column headers in sheet order (A through AE). */
+/** All 33 column headers in sheet order (A through AG). */
 export const HEADER_ROW = [
   'record_id',
   'created_at',
@@ -37,13 +37,15 @@ export const HEADER_ROW = [
   'last_edited_at',
   'notes',
   'tags',
+  'upi_transaction_id',
+  'google_transaction_id',
 ];
 
 let cachedSpreadsheetId = null;
 
 /**
  * Ensure the app's spreadsheet exists with the correct structure.
- * Creates the spreadsheet, a "records" worksheet, and a 31-column header
+ * Creates the spreadsheet, a "records" worksheet, and a 33-column header
  * row idempotently. Safe to call on every sign-in.
  * @returns {Promise<string>} The spreadsheet ID
  * @throws {Error} If Drive search or Sheets creation fails
@@ -61,6 +63,26 @@ export async function ensureAppSheet() {
   const files = searchResponse.result.files;
   if (files && files.length > 0) {
     cachedSpreadsheetId = files[0].id;
+
+    // Migrate: extend header row if existing sheet has fewer columns than expected
+    try {
+      const headerResp = await window.gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: cachedSpreadsheetId,
+        range: `${SHEET_WORKSHEET}!1:1`,
+      });
+      const existingHeader = headerResp.result.values?.[0] || [];
+      if (existingHeader.length < HEADER_ROW.length) {
+        await window.gapi.client.sheets.spreadsheets.values.update({
+          spreadsheetId: cachedSpreadsheetId,
+          range: `${SHEET_WORKSHEET}!A1:AG1`,
+          valueInputOption: 'RAW',
+          resource: { values: [HEADER_ROW] },
+        });
+      }
+    } catch {
+      // Non-critical: header migration may fail for permissions, ignore
+    }
+
     return cachedSpreadsheetId;
   }
 
@@ -74,10 +96,10 @@ export async function ensureAppSheet() {
 
   cachedSpreadsheetId = createResponse.result.spreadsheetId;
 
-  // Write the header row (A1:AE1)
+  // Write the header row (A1:AG1)
   await window.gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId: cachedSpreadsheetId,
-    range: `${SHEET_WORKSHEET}!A1:AE1`,
+    range: `${SHEET_WORKSHEET}!A1:AG1`,
     valueInputOption: 'RAW',
     resource: { values: [HEADER_ROW] },
   });
@@ -135,7 +157,7 @@ export async function appendRecord(record) {
 
   await window.gapi.client.sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${SHEET_WORKSHEET}!A:AE`,
+    range: `${SHEET_WORKSHEET}!A:AG`,
     valueInputOption: 'RAW',
     insertDataOption: 'INSERT_ROWS',
     resource: { values: [row] },
@@ -167,7 +189,7 @@ export async function updateRecord(recordId, updatedRecord) {
 
   await window.gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${SHEET_WORKSHEET}!A${existing._rowIndex}:AE${existing._rowIndex}`,
+    range: `${SHEET_WORKSHEET}!A${existing._rowIndex}:AG${existing._rowIndex}`,
     valueInputOption: 'RAW',
     resource: { values: [row] },
   });
@@ -209,7 +231,7 @@ export async function archiveRecord(recordId, reason = '') {
 
   await window.gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${SHEET_WORKSHEET}!A${existing._rowIndex}:AE${existing._rowIndex}`,
+    range: `${SHEET_WORKSHEET}!A${existing._rowIndex}:AG${existing._rowIndex}`,
     valueInputOption: 'RAW',
     resource: { values: [row] },
   });
@@ -250,7 +272,7 @@ export async function restoreRecord(recordId) {
 
   await window.gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId,
-    range: `${SHEET_WORKSHEET}!A${existing._rowIndex}:AE${existing._rowIndex}`,
+    range: `${SHEET_WORKSHEET}!A${existing._rowIndex}:AG${existing._rowIndex}`,
     valueInputOption: 'RAW',
     resource: { values: [row] },
   });
@@ -271,7 +293,7 @@ export async function getAllRecords() {
 
   const response = await window.gapi.client.sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${SHEET_WORKSHEET}!A:AE`,
+    range: `${SHEET_WORKSHEET}!A:AG`,
   });
 
   const rows = response.result.values;

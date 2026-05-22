@@ -28,7 +28,7 @@ import { saveAs } from 'file-saver';
 import { getAllRecords, archiveRecord, restoreRecord } from '../../services/sheetsService';
 import { getImageBlob } from '../../services/driveService';
 import { generateProofPacketPDF, generatePlainTextSummary, editRecord } from '../../services/recordService';
-import { formatDisplayDate, formatTimestamp, formatCurrency } from '../../utils/dateHelpers';
+import { formatDisplayDate, formatTimestamp, formatCurrency, toDateInputDisplay, fromDateInputDisplay } from '../../utils/dateHelpers';
 import { buildPageTitle } from '../../config/branding';
 import { useToast } from '../shared/Toast';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -37,18 +37,22 @@ const PAYMENT_MODE_LABELS = {
   gpay: 'GPay',
   phonepe: 'PhonePe',
   paytm: 'Paytm',
-  net_banking: 'Net Banking',
+  neft: 'NEFT',
+  rtgs: 'RTGS',
   card: 'Card',
   other: 'Other',
+  net_banking: 'Net Banking',
 };
 
 const PAYMENT_MODE_COLORS = {
   gpay: 'bg-blue-100 text-blue-700',
   phonepe: 'bg-purple-100 text-purple-700',
   paytm: 'bg-cyan-100 text-cyan-700',
-  net_banking: 'bg-emerald-100 text-emerald-700',
+  neft: 'bg-emerald-100 text-emerald-700',
+  rtgs: 'bg-teal-100 text-teal-700',
   card: 'bg-orange-100 text-orange-700',
   other: 'bg-slate-100 text-slate-600',
+  net_banking: 'bg-emerald-100 text-emerald-700',
 };
 
 /** Editable bill fields in edit mode. */
@@ -61,15 +65,24 @@ const BILL_EDIT_FIELDS = [
   { key: 'currency', label: 'Currency', type: 'text' },
 ];
 
-/** Editable payment fields in edit mode. */
-const PAYMENT_EDIT_FIELDS = [
-  { key: 'utr_number', label: 'UTR Number', type: 'text' },
-  { key: 'payment_date', label: 'Payment Date', type: 'date' },
-  { key: 'payment_mode', label: 'Payment Mode', type: 'select' },
-  { key: 'paid_amount', label: 'Amount Paid', type: 'number' },
-  { key: 'payer_name', label: 'Payer', type: 'text' },
-  { key: 'payee_name', label: 'Payee', type: 'text' },
-];
+/** Editable payment fields in edit mode (dynamic based on payment mode). */
+function getPaymentEditFields(paymentMode) {
+  const fields = [];
+  if (paymentMode === 'gpay') {
+    fields.push({ key: 'upi_transaction_id', label: 'UPI Transaction ID', type: 'text' });
+    fields.push({ key: 'google_transaction_id', label: 'Google Transaction ID', type: 'text' });
+  } else {
+    fields.push({ key: 'utr_number', label: 'UTR Number', type: 'text' });
+  }
+  fields.push(
+    { key: 'payment_date', label: 'Payment Date', type: 'date' },
+    { key: 'payment_mode', label: 'Payment Mode', type: 'select' },
+    { key: 'paid_amount', label: 'Amount Paid', type: 'number' },
+    { key: 'payer_name', label: 'Payer', type: 'text' },
+    { key: 'payee_name', label: 'Payee', type: 'text' },
+  );
+  return fields;
+}
 
 export default function RecordDetail() {
   const { recordId } = useParams();
@@ -238,6 +251,8 @@ export default function RecordDetail() {
       paid_amount: record.paid_amount || '',
       payer_name: record.payer_name || '',
       payee_name: record.payee_name || '',
+      upi_transaction_id: record.upi_transaction_id || '',
+      google_transaction_id: record.google_transaction_id || '',
       notes: record.notes || '',
       tags: record.tags || '',
     });
@@ -521,7 +536,7 @@ export default function RecordDetail() {
           <dl className="space-y-3">
             {editMode ? (
               <>
-                {PAYMENT_EDIT_FIELDS.map((f) =>
+                {getPaymentEditFields(editFields.payment_mode || record.payment_mode).map((f) =>
                   f.type === 'select' ? (
                     <EditRow
                       key={f.key}
@@ -552,7 +567,14 @@ export default function RecordDetail() {
               </>
             ) : (
               <>
-                <DetailRow label="UTR Number" value={record.utr_number} />
+                {record.payment_mode === 'gpay' ? (
+                  <>
+                    <DetailRow label="UPI Transaction ID" value={record.upi_transaction_id} />
+                    <DetailRow label="Google Transaction ID" value={record.google_transaction_id} />
+                  </>
+                ) : (
+                  <DetailRow label="UTR Number" value={record.utr_number} />
+                )}
                 <DetailRow label="Payment Date" value={formatDisplayDate(record.payment_date)} />
                 <DetailRow
                   label="Payment Mode"
@@ -848,6 +870,7 @@ function DetailRow({ label, value, warn = false, readOnly = false }) {
 function EditRow({ label, type, value, onChange, options, placeholder }) {
   const inputClass =
     'w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-900 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary';
+  const isDate = type === 'date';
 
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
@@ -875,10 +898,10 @@ function EditRow({ label, type, value, onChange, options, placeholder }) {
           />
         ) : (
           <input
-            type={type}
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
+            type={isDate ? 'text' : type}
+            value={isDate ? toDateInputDisplay(value || '') : (value || '')}
+            onChange={(e) => onChange(isDate ? fromDateInputDisplay(e.target.value) : e.target.value)}
+            placeholder={isDate ? 'DD/MM/YYYY' : placeholder}
             step={type === 'number' ? 'any' : undefined}
             className={inputClass}
           />

@@ -17,18 +17,22 @@ const PAYMENT_MODE_LABELS = {
   gpay: 'GPay',
   phonepe: 'PhonePe',
   paytm: 'Paytm',
-  net_banking: 'Net Banking',
+  neft: 'NEFT',
+  rtgs: 'RTGS',
   card: 'Card',
   other: 'Other',
+  net_banking: 'Net Banking',
 };
 
 const PAYMENT_MODE_COLORS = {
   gpay: '#3b82f6',
   phonepe: '#8b5cf6',
   paytm: '#06b6d4',
-  net_banking: '#10b981',
+  neft: '#10b981',
+  rtgs: '#14b8a6',
   card: '#f97316',
   other: '#94a3b8',
+  net_banking: '#10b981',
 };
 
 /**

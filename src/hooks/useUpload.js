@@ -130,6 +130,23 @@ export default function useUpload() {
         return;
       }
 
+      // Validate required fields before saving
+      const missing = [];
+      if (!billFields.trader_name) missing.push('Trader Name');
+      if (!billFields.invoice_number) missing.push('Invoice Number');
+      if (!billFields.bill_date) missing.push('Bill Date');
+      if (!billFields.bill_amount) missing.push('Bill Amount');
+      if (!paymentFields.payment_date) missing.push('Payment Date');
+      if (!paymentFields.payment_mode) missing.push('Payment Mode');
+      if (!paymentFields.paid_amount) missing.push('Paid Amount');
+      if (paymentFields.payment_mode !== 'gpay' && !paymentFields.utr_number) {
+        missing.push('UTR Number');
+      }
+      if (missing.length > 0) {
+        setError(`Required fields missing: ${missing.join(', ')}`);
+        return;
+      }
+
       setStep('saving');
       setError(null);
       setDuplicateRecord(null);
@@ -177,6 +194,16 @@ export default function useUpload() {
     setDuplicateRecord(null);
   }, [billPreview, paymentPreview]);
 
+  // Computed: can the form be saved? All required fields must be filled.
+  const canSave = !!(
+    billFields && paymentFields &&
+    billFields.trader_name && billFields.invoice_number &&
+    billFields.bill_date && billFields.bill_amount &&
+    paymentFields.payment_date && paymentFields.payment_mode &&
+    paymentFields.paid_amount &&
+    (paymentFields.payment_mode === 'gpay' || paymentFields.utr_number)
+  );
+
   return {
     // Image state
     billFile,
@@ -199,6 +226,7 @@ export default function useUpload() {
     progress,
     error,
     duplicateRecord,
+    canSave,
 
     // Actions
     extractAndReview,

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useUpload from '../../hooks/useUpload';
 import { useToast } from '../shared/Toast';
 import { buildPageTitle } from '../../config/branding';
@@ -8,6 +9,7 @@ import LoadingSpinner from '../shared/LoadingSpinner';
 import { AlertTriangle, CheckCircle, FileText } from 'lucide-react';
 
 export default function UploadPage() {
+  const navigate = useNavigate();
   const {
     billFile,
     paymentFile,
@@ -29,6 +31,7 @@ export default function UploadPage() {
     save,
     reset,
     dismissDuplicate,
+    canSave,
   } = useUpload();
   const { addToast } = useToast();
 
@@ -168,7 +171,7 @@ export default function UploadPage() {
                 <button
                   type="button"
                   onClick={() => save(false)}
-                  disabled={step === 'saving'}
+                  disabled={step === 'saving' || !canSave}
                   className="flex items-center gap-2 rounded-lg bg-green-600 px-8 py-3 text-sm font-medium text-white shadow transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {step === 'saving' ? (
@@ -191,8 +194,8 @@ export default function UploadPage() {
         <DuplicateModal
           existingRecord={duplicateRecord}
           onViewExisting={() => {
-            window.open(`/history/${duplicateRecord.record_id}`, '_blank');
             dismissDuplicate();
+            navigate(`/history/${duplicateRecord.record_id}`);
           }}
           onSaveAnyway={() => {
             dismissDuplicate();

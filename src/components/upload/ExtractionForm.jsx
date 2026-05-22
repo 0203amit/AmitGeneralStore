@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { toDateInputDisplay, fromDateInputDisplay } from '../../utils/dateHelpers';
 
 const CONFIDENCE_THRESHOLD = 0.7;
 
@@ -6,7 +7,8 @@ const PAYMENT_MODE_OPTIONS = [
   { value: 'gpay', label: 'GPay' },
   { value: 'phonepe', label: 'PhonePe' },
   { value: 'paytm', label: 'Paytm' },
-  { value: 'net_banking', label: 'Net Banking' },
+  { value: 'neft', label: 'NEFT' },
+  { value: 'rtgs', label: 'RTGS' },
   { value: 'card', label: 'Card' },
   { value: 'other', label: 'Other' },
 ];
@@ -16,6 +18,7 @@ const PAYMENT_MODE_OPTIONS = [
  */
 function FieldInput({ label, value, onChange, confidence, type = 'text', required = false, disabled }) {
   const isLowConfidence = confidence !== undefined && confidence < CONFIDENCE_THRESHOLD;
+  const isDate = type === 'date';
 
   return (
     <div className="space-y-1">
@@ -30,9 +33,10 @@ function FieldInput({ label, value, onChange, confidence, type = 'text', require
         )}
       </label>
       <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        type={isDate ? 'text' : type}
+        value={isDate ? toDateInputDisplay(value) : value}
+        onChange={(e) => onChange(isDate ? fromDateInputDisplay(e.target.value) : e.target.value)}
+        placeholder={isDate ? 'DD/MM/YYYY' : undefined}
         disabled={disabled}
         className={`w-full rounded-md border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
           isLowConfidence
@@ -127,14 +131,33 @@ export default function ExtractionForm({
       <fieldset className="rounded-lg border border-slate-200 p-4">
         <legend className="px-2 text-sm font-semibold text-slate-800">Payment Details</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          <FieldInput
-            label="UTR Number"
-            value={paymentFields.utr_number}
-            onChange={(v) => onPaymentFieldChange('utr_number', v)}
-            confidence={pc.utr_number}
-            required
-            disabled={disabled}
-          />
+          {paymentFields.payment_mode === 'gpay' ? (
+            <>
+              <FieldInput
+                label="UPI Transaction ID"
+                value={paymentFields.upi_transaction_id}
+                onChange={(v) => onPaymentFieldChange('upi_transaction_id', v)}
+                confidence={pc.upi_transaction_id}
+                disabled={disabled}
+              />
+              <FieldInput
+                label="Google Transaction ID"
+                value={paymentFields.google_transaction_id}
+                onChange={(v) => onPaymentFieldChange('google_transaction_id', v)}
+                confidence={pc.google_transaction_id}
+                disabled={disabled}
+              />
+            </>
+          ) : (
+            <FieldInput
+              label="UTR Number"
+              value={paymentFields.utr_number}
+              onChange={(v) => onPaymentFieldChange('utr_number', v)}
+              confidence={pc.utr_number}
+              required
+              disabled={disabled}
+            />
+          )}
           <FieldInput
             label="Payment Date"
             value={paymentFields.payment_date}

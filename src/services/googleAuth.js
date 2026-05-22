@@ -22,6 +22,7 @@ let accessToken = null;
 let tokenExpiresAt = null;
 let refreshTimerId = null;
 let tokenRefreshCallbacks = [];
+let customTokenRefresher = null;
 
 /**
  * Initialize the Google API client library with discovery documents.
@@ -67,11 +68,21 @@ export function isAuthenticated() {
 }
 
 /**
+ * Set a custom token refresh function (used by Service Account auth).
+ * When set, scheduleRefresh will call this instead of attemptSilentRefresh.
+ * @param {(() => Promise<{access_token: string, expires_in: number}>)|null} refresher
+ */
+export function setTokenRefresher(refresher) {
+  customTokenRefresher = refresher;
+}
+
+/**
  * Clear all auth state. Called during sign-out.
  */
 export function clearAuth() {
   accessToken = null;
   tokenExpiresAt = null;
+  customTokenRefresher = null;
   if (refreshTimerId) {
     clearTimeout(refreshTimerId);
     refreshTimerId = null;
@@ -173,11 +184,21 @@ function scheduleRefresh(expiresIn) {
   const refreshSec = expiresIn > 600 ? expiresIn - 300 : expiresIn / 2;
   const refreshMs = refreshSec * 1000;
   if (refreshMs > 0) {
-    refreshTimerId = setTimeout(() => {
-      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-      attemptSilentRefresh(clientId).catch((err) => {
-        console.error('Silent token refresh failed:', err);
-      });
+    refreshTimerId = setTimeout(async () => {
+      try {
+        if (customTokenRefresher) {
+          // Service Account: re-sign JWT and exchange for new token
+          const { access_token, expires_in } = await customTokenRefresher();
+          setAccessToken(access_token, expires_in);
+          tokenRefreshCallbacks.forEach((cb) => cb(access_token));
+        } else {
+          // Google OAuth: silent re-authorization via GIS
+          const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+          await attemptSilentRefresh(clientId);
+        }
+      } catch (err) {
+        console.error('Token refresh failed:', err);
+      }
     }, refreshMs);
   }
 }

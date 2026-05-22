@@ -15,6 +15,8 @@ const SEARCH_FIELDS = [
   'payer_name',
   'payee_name',
   'trader_address',
+  'upi_transaction_id',
+  'google_transaction_id',
 ];
 
 /**
