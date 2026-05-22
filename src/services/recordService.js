@@ -4,8 +4,7 @@
  * Implements atomic save guarantees, duplicate detection, and proof packet generation.
  */
 import { v4 as uuidv4 } from 'uuid';
-import { jsPDF } from 'jspdf';
-import JSZip from 'jszip';
+// jsPDF and JSZip are dynamically imported where used to reduce initial bundle size
 import { format } from 'date-fns';
 import { uploadImage, deleteImage, getImageBlob } from './driveService';
 import { appendRecord, updateRecord, getAllRecords, computeCompositeKey } from './sheetsService';
@@ -389,8 +388,9 @@ export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFie
     const billResult = await uploadImage(billBlob, 'bill', recordId);
     billFileId = billResult.fileId;
     billWebViewLink = billResult.webViewLink;
-  } catch {
-    throw new Error('Failed to upload bill image. Please try again.');
+  } catch (err) {
+    console.error('Bill image upload failed:', err);
+    throw new Error(`Failed to upload bill image: ${err.message || 'Please try again.'}`);
   }
 
   // Step 2: Upload payment image
@@ -398,15 +398,16 @@ export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFie
     const paymentResult = await uploadImage(paymentBlob, 'payment', recordId);
     paymentFileId = paymentResult.fileId;
     paymentWebViewLink = paymentResult.webViewLink;
-  } catch {
+  } catch (err) {
+    console.error('Payment image upload failed:', err);
     // Rollback: delete bill image
     try {
       await deleteImage(billFileId);
     } catch (rollbackErr) {
       console.error('Rollback failed: could not delete bill image', rollbackErr);
-      throw new Error('Failed to upload payment image. Some files may need manual cleanup in Drive.');
+      throw new Error(`Failed to upload payment image. Some files may need manual cleanup in Drive. (${err.message})`);
     }
-    throw new Error('Failed to upload payment image. Please try again.');
+    throw new Error(`Failed to upload payment image: ${err.message || 'Please try again.'}`);
   }
 
   // Step 3: Build record and append to Sheet
@@ -452,15 +453,16 @@ export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFie
 
   try {
     await appendRecord(record);
-  } catch {
+  } catch (err) {
+    console.error('Sheet append failed:', err);
     // Rollback: delete both images
     try {
       await Promise.all([deleteImage(billFileId), deleteImage(paymentFileId)]);
     } catch (rollbackErr) {
       console.error('Rollback failed: could not delete images', rollbackErr);
-      throw new Error('Failed to save record. Some files may need manual cleanup in Drive.');
+      throw new Error(`Failed to save record. Some files may need manual cleanup in Drive. (${err.message})`);
     }
-    throw new Error('Failed to save record. Please try again.');
+    throw new Error(`Failed to save record: ${err.message || 'Please try again.'}`);
   }
 
   return record;
@@ -604,6 +606,7 @@ export function generatePlainTextSummary(record) {
  * @returns {Promise<Blob>} PDF as a Blob
  */
 export async function generateProofPacketPDF(record) {
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const generatedAt = format(new Date(), 'dd MMM yyyy, HH:mm');
 
@@ -643,6 +646,7 @@ export async function generateBulkProofPacketPDF(records) {
     throw new Error('No records selected for export.');
   }
 
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const generatedAt = format(new Date(), 'dd MMM yyyy, HH:mm');
 
@@ -700,6 +704,7 @@ export async function downloadFullBackup(onProgress) {
   const csvString = generateCsvString(records);
   const csvFilename = buildCsvFilename();
 
+  const JSZip = (await import('jszip')).default;
   const zip = new JSZip();
   zip.file(csvFilename, csvString);
 

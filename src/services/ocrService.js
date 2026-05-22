@@ -3,7 +3,7 @@
  * Runs OCR entirely in the browser using a Web Worker — no cloud API needed.
  * Replaces the former Document AI service with a free, offline-capable alternative.
  */
-import { createWorker } from 'tesseract.js';
+// tesseract.js is dynamically imported to reduce initial bundle size
 import { parseBillText, parsePaymentText } from '../utils/parseOcrText';
 
 // ── Singleton worker ────────────────────────────────────────────────
@@ -17,6 +17,7 @@ let workerInstance = null;
  */
 async function getWorker() {
   if (!workerInstance) {
+    const { createWorker } = await import('tesseract.js');
     workerInstance = await createWorker('eng');
     await workerInstance.setParameters({
       tessedit_pageseg_mode: '6',       // Single uniform block of text

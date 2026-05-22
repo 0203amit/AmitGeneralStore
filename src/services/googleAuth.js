@@ -23,6 +23,7 @@ let tokenExpiresAt = null;
 let refreshTimerId = null;
 let tokenRefreshCallbacks = [];
 let customTokenRefresher = null;
+let authErrorCallback = null;
 
 /**
  * Initialize the Google API client library with discovery documents.
@@ -56,6 +57,7 @@ export function setAccessToken(token, expiresIn) {
  * @returns {string|null}
  */
 export function getAccessToken() {
+  if (!accessToken || Date.now() >= tokenExpiresAt) return null;
   return accessToken;
 }
 
@@ -74,6 +76,15 @@ export function isAuthenticated() {
  */
 export function setTokenRefresher(refresher) {
   customTokenRefresher = refresher;
+}
+
+/**
+ * Set a callback invoked when token refresh fails (session expired).
+ * Used by AuthProvider to surface refresh failures to the UI.
+ * @param {((err: Error) => void)|null} callback
+ */
+export function setAuthErrorCallback(callback) {
+  authErrorCallback = callback;
 }
 
 /**
@@ -198,6 +209,16 @@ function scheduleRefresh(expiresIn) {
         }
       } catch (err) {
         console.error('Token refresh failed:', err);
+        // Clear the expired token so getAccessToken() returns null
+        accessToken = null;
+        tokenExpiresAt = null;
+        if (window.gapi?.client) {
+          window.gapi.client.setToken(null);
+        }
+        // Notify the UI layer so it can prompt re-authentication
+        if (authErrorCallback) {
+          authErrorCallback(new Error('Your session has expired. Please sign in again.'));
+        }
       }
     }, refreshMs);
   }

@@ -166,6 +166,7 @@ export async function getImageUrl(fileId) {
  */
 export async function getImageBlob(fileId) {
   const token = getAccessToken();
+  if (!token) throw new Error('Not authenticated. Please sign in again.');
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
     { headers: { Authorization: `Bearer ${token}` } }
@@ -182,6 +183,7 @@ export async function getImageBlob(fileId) {
  */
 export async function deleteImage(fileId) {
   const token = getAccessToken();
+  if (!token) throw new Error('Not authenticated');
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}`,
     {
