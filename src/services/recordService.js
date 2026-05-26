@@ -105,35 +105,54 @@ function addCoverPage(doc, record, generatedAt) {
   doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
   y += 15;
 
-  // Key fields
+  // Key fields (skip empty fields entirely)
   const labelWidth = 45;
   doc.setFontSize(10);
 
-  y = drawLabelValue(doc, t('pdf.trader'), field(record.trader_name), MARGIN, y, labelWidth);
-  if (record.trader_address) {
-    y = drawLabelValue(doc, t('pdf.address'), field(record.trader_address), MARGIN, y, labelWidth);
+  if (record.trader_name) {
+    y = drawLabelValue(doc, t('pdf.trader'), record.trader_name, MARGIN, y, labelWidth);
   }
-  y = drawLabelValue(doc, t('pdf.invoiceNo'), field(record.invoice_number), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, t('pdf.billDate'), formatDisplayDate(record.bill_date) || t('common.notAvailable'), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, t('pdf.billAmount'), record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : t('common.notAvailable'), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, t('pdf.currency'), field(record.currency), MARGIN, y, labelWidth);
+  if (record.trader_address) {
+    y = drawLabelValue(doc, t('pdf.address'), record.trader_address, MARGIN, y, labelWidth);
+  }
+  if (record.invoice_number) {
+    y = drawLabelValue(doc, t('pdf.invoiceNo'), record.invoice_number, MARGIN, y, labelWidth);
+  }
+  if (record.bill_date) {
+    y = drawLabelValue(doc, t('pdf.billDate'), formatDisplayDate(record.bill_date), MARGIN, y, labelWidth);
+  }
+  if (record.bill_amount) {
+    y = drawLabelValue(doc, t('pdf.billAmount'), `Rs.${formatCurrency(record.bill_amount)}`, MARGIN, y, labelWidth);
+  }
   y += 5;
 
-  // Payment details
+  // Payment details (skip empty fields entirely)
   if (record.payment_mode === 'gpay') {
-    y = drawLabelValue(doc, t('pdf.upiTxnId'), field(record.upi_transaction_id), MARGIN, y, labelWidth);
-    y = drawLabelValue(doc, t('pdf.googleTxnId'), field(record.google_transaction_id), MARGIN, y, labelWidth);
+    if (record.upi_transaction_id) {
+      y = drawLabelValue(doc, t('pdf.upiTxnId'), record.upi_transaction_id, MARGIN, y, labelWidth);
+    }
+    if (record.google_transaction_id) {
+      y = drawLabelValue(doc, t('pdf.googleTxnId'), record.google_transaction_id, MARGIN, y, labelWidth);
+    }
   } else {
-    y = drawLabelValue(doc, t('pdf.utrNumber'), field(record.utr_number), MARGIN, y, labelWidth);
+    if (record.utr_number) {
+      y = drawLabelValue(doc, t('pdf.utrNumber'), record.utr_number, MARGIN, y, labelWidth);
+    }
   }
-  y = drawLabelValue(doc, t('pdf.paymentDate'), formatDisplayDate(record.payment_date) || t('common.notAvailable'), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, t('pdf.paymentMode'), PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, t('pdf.paidAmount'), record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : t('common.notAvailable'), MARGIN, y, labelWidth);
+  if (record.payment_date) {
+    y = drawLabelValue(doc, t('pdf.paymentDate'), formatDisplayDate(record.payment_date), MARGIN, y, labelWidth);
+  }
+  if (record.payment_mode) {
+    y = drawLabelValue(doc, t('pdf.paymentMode'), PAYMENT_MODE_LABELS[record.payment_mode] || record.payment_mode, MARGIN, y, labelWidth);
+  }
+  if (record.paid_amount) {
+    y = drawLabelValue(doc, t('pdf.paidAmount'), `Rs.${formatCurrency(record.paid_amount)}`, MARGIN, y, labelWidth);
+  }
   if (record.payer_name) {
-    y = drawLabelValue(doc, t('pdf.payer'), field(record.payer_name), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.payer'), record.payer_name, MARGIN, y, labelWidth);
   }
   if (record.payee_name) {
-    y = drawLabelValue(doc, t('pdf.payee'), field(record.payee_name), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.payee'), record.payee_name, MARGIN, y, labelWidth);
   }
   y += 10;
 
@@ -606,11 +625,10 @@ export function generatePlainTextSummary(record) {
 }
 
 /**
- * Generate a single-record 4-page Proof Packet PDF.
+ * Generate a single-record 3-page Proof Packet PDF.
  * Page 1: Branded cover with key fields.
  * Page 2: Bill image fetched from Drive.
  * Page 3: Payment receipt image fetched from Drive.
- * Page 4: Data summary table with generation timestamp.
  * @param {Object} record - Full record object
  * @returns {Promise<Blob>} PDF as a Blob
  */
@@ -630,10 +648,6 @@ export async function generateProofPacketPDF(record) {
   doc.addPage();
   await addImagePage(doc, record.payment_image_file_id, t('detail.paymentReceipt'));
 
-  // Page 4: Data summary
-  doc.addPage();
-  addSummaryPage(doc, record, generatedAt);
-
   // Add footers to all pages
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
@@ -646,7 +660,7 @@ export async function generateProofPacketPDF(record) {
 
 /**
  * Generate a bulk Proof Packet PDF for multiple records.
- * Cover page lists all selected records, then each record's 4 pages follow.
+ * Cover page lists all selected records, then each record's 3 pages follow.
  * @param {Object[]} records - Array of full record objects
  * @returns {Promise<Blob>} PDF as a Blob
  */
@@ -662,7 +676,7 @@ export async function generateBulkProofPacketPDF(records) {
   // Bulk cover page
   addBulkCoverPage(doc, records, generatedAt);
 
-  // Each record's 4 pages
+  // Each record's 3 pages
   for (const record of records) {
     doc.addPage();
     addCoverPage(doc, record, generatedAt);
@@ -672,9 +686,6 @@ export async function generateBulkProofPacketPDF(records) {
 
     doc.addPage();
     await addImagePage(doc, record.payment_image_file_id, t('detail.paymentReceipt'));
-
-    doc.addPage();
-    addSummaryPage(doc, record, generatedAt);
   }
 
   // Add footers to all pages

@@ -55,6 +55,7 @@ export function AuthProvider({ children }) {
   const [spreadsheetId, setSpreadsheetId] = useState(null);
   const [error, setError] = useState(null);
   const [adminLoginPhase, setAdminLoginPhase] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const initRef = useRef(false);
 
   /** Restore an admin session: silent OAuth for Drive access, then provision. */
@@ -75,6 +76,7 @@ export function AuthProvider({ children }) {
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
       setUser({ name: adminUser.name, email: adminUser.email, picture: null });
+      setIsAdmin(true);
       setProvisioning(false);
     } catch (err) {
       console.error('Admin session restore failed:', err);
@@ -264,6 +266,7 @@ export function AuthProvider({ children }) {
       });
       setProvisioning(false);
 
+      setIsAdmin(true);
       // Save session so page refresh can restore via silent OAuth
       saveAdminSession(adminUser);
     } catch (err) {
@@ -290,6 +293,7 @@ export function AuthProvider({ children }) {
     clearSheetCache();
     clearAdminSession();
     setUser(null);
+    setIsAdmin(false);
     setFolderIds(null);
     setSpreadsheetId(null);
     setError(null);
@@ -306,6 +310,7 @@ export function AuthProvider({ children }) {
     signIn,
     adminSignIn,
     signOut,
+    isAdmin,
     isAuthenticated: !!user && googleAuth.isAuthenticated(),
     isAdminLoginAvailable: import.meta.env.VITE_ADMIN_LOGIN_ENABLED === 'true',
   };

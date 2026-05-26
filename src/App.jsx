@@ -40,6 +40,13 @@ function Landing() {
   );
 }
 
+/** Redirects admin users away from pages they shouldn't access. */
+function AdminGuard({ children }) {
+  const { isAdmin } = useAuth();
+  if (isAdmin) return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
 /** Layout wrapper that adds Navbar above page content. */
 function ProtectedLayout({ children }) {
   return (
@@ -91,7 +98,9 @@ export default function App() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <ProtectedLayout><SettingsPage /></ProtectedLayout>
+              <AdminGuard>
+                <ProtectedLayout><SettingsPage /></ProtectedLayout>
+              </AdminGuard>
             </ProtectedRoute>
           }
         />

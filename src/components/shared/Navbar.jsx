@@ -28,7 +28,7 @@ const NAV_LINKS = [
  * and sign-out dropdown. Collapses into a hamburger menu on mobile.
  */
 export default function Navbar() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { addToast } = useToast();
   const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -72,7 +72,7 @@ export default function Navbar() {
 
         {/* Desktop nav links */}
         <div className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map(({ to, labelKey, icon: Icon }) => (
+          {NAV_LINKS.filter(({ to }) => !isAdmin || to !== '/settings').map(({ to, labelKey, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -147,7 +147,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="border-t border-slate-200 bg-white px-4 pb-4 md:hidden">
           <div className="flex flex-col gap-1 pt-2">
-            {NAV_LINKS.map(({ to, labelKey, icon: Icon }) => (
+            {NAV_LINKS.filter(({ to }) => !isAdmin || to !== '/settings').map(({ to, labelKey, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}

@@ -105,7 +105,7 @@ export default function UploadPage() {
             <ImageDropzone
               label={t('upload.paymentReceipt')}
               helperText={t('upload.paymentHelperText')}
-              captureMode={null}
+              captureMode="environment"
               file={paymentFile}
               previewUrl={paymentPreview}
               onFileSelect={setPaymentFile}
