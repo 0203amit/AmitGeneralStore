@@ -42,7 +42,7 @@ https://www.googleapis.com/auth/spreadsheets
 **Environment Variables**:
 ```text
 VITE_GOOGLE_CLIENT_ID=<oauth-client-id>.apps.googleusercontent.com
-VITE_GOOGLE_PROJECT_ID=<gcp-project-id>
+VITE_GOOGLE_PROJECT_NUMBER=<gcp-project-number>
 ```
 
 ---

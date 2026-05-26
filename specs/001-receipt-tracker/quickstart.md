@@ -63,7 +63,7 @@ Edit `.env`:
 
 ```env
 VITE_GOOGLE_CLIENT_ID=<your-client-id>.apps.googleusercontent.com
-VITE_GOOGLE_PROJECT_ID=<your-gcp-project-id>
+VITE_GOOGLE_PROJECT_NUMBER=<your-gcp-project-number>
 ```
 
 ### Run Development Server
@@ -125,4 +125,4 @@ After deployment:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `VITE_GOOGLE_CLIENT_ID` | Yes | OAuth 2.0 Client ID from Google Cloud Console |
-| `VITE_GOOGLE_PROJECT_ID` | Yes | Google Cloud project ID |
+| `VITE_GOOGLE_PROJECT_NUMBER` | Yes | Google Cloud project number |

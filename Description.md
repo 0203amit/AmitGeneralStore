@@ -222,7 +222,7 @@ This application is single-user. The signed-in Google account is the owner of al
     * Bill Receipt (left / top on mobile) — REQUIRED
     * Payment Receipt (right / bottom on mobile) — REQUIRED
   - Both drop zones marked with red asterisk (*) indicating required
-  - Accepted formats: JPG, JPEG, PNG, PDF
+  - Accepted formats: JPG, JPEG, PNG
   - Max file size: 10 MB per image
   - Image preview shown after selection
   - "Replace" and "Remove" buttons per zone
@@ -642,7 +642,7 @@ This application is single-user. The signed-in Google account is the owner of al
   - "Export to CSV" button on history page
   - Exports current filtered view (or all if no filter)
   - Columns: all fields from Sheet
-  - Filename: receipts_export_YYYY-MM-DD.csv
+  - Filename: amit_general_store_receipts_YYYY-MM-DD.csv
   - Includes all archived records (with status column) if "Include archived" toggle is on
   ```
 
@@ -911,7 +911,7 @@ File naming convention: `<record_id>_<type>.<ext>` where `<type>` is `bill` or `
 ### Environment Variables (.env)
 ```
 VITE_GOOGLE_CLIENT_ID=<your-oauth-client-id>.apps.googleusercontent.com
-VITE_GOOGLE_PROJECT_ID=<your-gcp-project-id>
+VITE_GOOGLE_PROJECT_NUMBER=<your-gcp-project-number>
 VITE_APP_FOLDER_NAME="Amit General Store - Receipts"
 VITE_APP_SHEET_NAME="Amit General Store - Receipt Database"
 ```
@@ -1233,7 +1233,7 @@ Phase 9: Polish & Deploy
 - ✅ User can choose existing image from device gallery / file system
 - ✅ User can drag & drop images on desktop browsers
 - ✅ Camera defaults to rear (environment) camera for bill capture
-- ✅ Images > 2 MB are auto-compressed before upload
+- ✅ Images > 5 MB are auto-compressed before upload
 - ✅ HEIC images (iOS) are auto-converted to JPEG
 - ✅ Images auto-rotate based on EXIF orientation data
 - ✅ Save operation is atomic — partial records never created in Sheet

@@ -78,8 +78,10 @@ The central entity. Each record links one trader bill to its proof of payment. S
 |-------|------|---------|---------|----------|-------------|
 | notes | string | null | yes | yes | User's private notes (e.g., "settled in person") |
 | tags | string | null | yes | yes | Comma-separated tags (e.g., "groceries,monthly") |
+| upi_transaction_id | string | null | yes | yes | UPI-specific transaction identifier extracted from payment OCR |
+| google_transaction_id | string | null | yes | yes | Google Pay transaction identifier extracted from payment OCR |
 
-#### Total Column Count: 31 columns
+#### Total Column Count: 33 columns
 
 #### Column Order in Sheet
 
@@ -115,9 +117,11 @@ AB: last_edited_field
 AC: last_edited_at
 AD: notes
 AE: tags
+AF: upi_transaction_id
+AG: google_transaction_id
 ```
 
-Note: 31 columns total (A through AE). The header row (row 1) contains the field names exactly as listed. Data rows start at row 2.
+Note: 33 columns total (A through AG). The header row (row 1) contains the field names exactly as listed. Data rows start at row 2.
 
 ### 2. Bill Image (Google Drive File)
 

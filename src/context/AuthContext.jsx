@@ -1,8 +1,6 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import * as googleAuth from '../services/googleAuth';
-import { getServiceAccountAccessToken, isServiceAccountConfigured } from '../services/serviceAccountAuth';
-import { verifyAdminCredentials } from '../services/adminAuth';
 import { ensureAppFolder, clearFolderCache } from '../services/driveService';
 import { ensureAppSheet, clearSheetCache } from '../services/sheetsService';
 
@@ -46,7 +44,7 @@ function clearAdminSession() {
 /**
  * Provides authentication state, sign-in/sign-out actions, and
  * post-sign-in provisioning of Drive folders and Sheets.
- * Supports both Google OAuth and admin (Service Account) login.
+ * Supports both Google OAuth and admin login (server-side credential verification).
  * Must be rendered inside GoogleOAuthProvider.
  */
 export function AuthProvider({ children }) {
@@ -97,7 +95,7 @@ export function AuthProvider({ children }) {
       .initGapi()
       .then(() => {
         const savedSession = getAdminSession();
-        if (savedSession && isServiceAccountConfigured()) {
+        if (savedSession) {
           restoreAdminSession(savedSession);
         } else {
           setLoading(false);
@@ -200,7 +198,7 @@ export function AuthProvider({ children }) {
 
   /**
    * Hybrid admin sign-in:
-   * 1. SA token → verify credentials from Sheet → clear SA
+   * 1. Server-side API verifies credentials (SA key stays on server)
    * 2. Silent OAuth (no popup) → fallback to consent popup (first time only)
    * 3. Provision Drive folders and Sheet with OAuth token
    */
@@ -209,17 +207,18 @@ export function AuthProvider({ children }) {
       setLoading(true);
       setError(null);
 
-      // Phase 1: Verify credentials using Service Account
+      // Phase 1: Verify credentials via server-side API
       setAdminLoginPhase('verifying');
-      const saToken = await getServiceAccountAccessToken();
-      googleAuth.setAccessToken(saToken.access_token, saToken.expires_in);
-      await ensureAppSheet(); // Need sheet access to verify credentials
-      const adminUser = await verifyAdminCredentials(username, password);
-
-      // Clear SA token — we'll use OAuth for ongoing operations
-      googleAuth.clearAuth();
-      clearFolderCache();
-      clearSheetCache();
+      const verifyRes = await fetch('/api/verify-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (!verifyRes.ok) {
+        const errData = await verifyRes.json().catch(() => ({}));
+        throw new Error(errData.error || 'Invalid username or password');
+      }
+      const adminUser = await verifyRes.json();
 
       // Phase 2: Get OAuth token (silent-first, popup fallback)
       setAdminLoginPhase('google-signin');
@@ -308,7 +307,7 @@ export function AuthProvider({ children }) {
     adminSignIn,
     signOut,
     isAuthenticated: !!user && googleAuth.isAuthenticated(),
-    isAdminLoginAvailable: isServiceAccountConfigured(),
+    isAdminLoginAvailable: import.meta.env.VITE_ADMIN_LOGIN_ENABLED === 'true',
   };
 
   return (
