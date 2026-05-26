@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import LoadingSpinner from './LoadingSpinner';
 
 /**
@@ -16,13 +17,17 @@ import LoadingSpinner from './LoadingSpinner';
 export default function ConfirmDialog({
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   confirmClassName = 'bg-brand-primary text-white hover:bg-brand-primary/90',
   onConfirm,
   onCancel,
   loading = false,
 }) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel || t('common.confirm');
+  const resolvedCancelLabel = cancelLabel || t('common.cancel');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl">
@@ -35,7 +40,7 @@ export default function ConfirmDialog({
             disabled={loading}
             className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             type="button"
@@ -44,7 +49,7 @@ export default function ConfirmDialog({
             className={`flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${confirmClassName}`}
           >
             {loading && <LoadingSpinner size="sm" />}
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </div>

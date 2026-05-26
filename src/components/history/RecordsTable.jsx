@@ -5,6 +5,7 @@
  * "Needs review" badge, colored payment mode badges.
  */
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowUpDown, ArrowUp, ArrowDown, Copy, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDisplayDate, formatCurrency } from '../../utils/dateHelpers';
 import { useToast } from '../shared/Toast';
@@ -65,13 +66,14 @@ export default function RecordsTable({
   onToggleSelect,
   onToggleSelectAll,
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { addToast } = useToast();
 
   function handleCopyInvoice(e, invoiceNumber) {
     e.stopPropagation();
     navigator.clipboard.writeText(invoiceNumber).then(() => {
-      addToast({ type: 'info', message: `Copied: ${invoiceNumber}` });
+      addToast({ type: 'info', message: t('history.copied', { value: invoiceNumber }) });
     });
   }
 
@@ -99,7 +101,7 @@ export default function RecordsTable({
   if (records.length === 0) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-        <p className="text-sm text-slate-500">No records found</p>
+        <p className="text-sm text-slate-500">{t('history.noRecordsFound')}</p>
       </div>
     );
   }
@@ -124,20 +126,20 @@ export default function RecordsTable({
                   />
                 </th>
               )}
-              <SortableHeader field="bill_date">Date</SortableHeader>
-              <SortableHeader field="trader_name">Trader</SortableHeader>
+              <SortableHeader field="bill_date">{t('history.date')}</SortableHeader>
+              <SortableHeader field="trader_name">{t('history.trader')}</SortableHeader>
               <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                Invoice
+                {t('history.invoice')}
               </th>
-              <SortableHeader field="bill_amount">Amount</SortableHeader>
+              <SortableHeader field="bill_amount">{t('history.amount')}</SortableHeader>
               <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                Mode
-              </th>
-              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                UTR
+                {t('history.mode')}
               </th>
               <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                Status
+                {t('history.utr')}
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+                {t('history.status')}
               </th>
             </tr>
           </thead>
@@ -162,20 +164,20 @@ export default function RecordsTable({
                   {formatDisplayDate(record.bill_date)}
                 </td>
                 <td className="px-3 py-3 text-sm font-medium text-slate-900">
-                  {record.trader_name || '—'}
+                  {record.trader_name || '\u2014'}
                 </td>
                 <td className="px-3 py-3 text-sm text-slate-600">
                   <button
                     onClick={(e) => handleCopyInvoice(e, record.invoice_number)}
                     className="group inline-flex items-center gap-1 hover:text-brand-primary"
-                    title="Click to copy"
+                    title={t('history.clickToCopy')}
                   >
-                    {record.invoice_number || '—'}
+                    {record.invoice_number || '\u2014'}
                     <Copy className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
                   </button>
                 </td>
                 <td className="whitespace-nowrap px-3 py-3 text-sm font-medium text-slate-900">
-                  ₹{formatCurrency(record.bill_amount)}
+                  \u20B9{formatCurrency(record.bill_amount)}
                 </td>
                 <td className="px-3 py-3">
                   <span
@@ -187,13 +189,13 @@ export default function RecordsTable({
                   </span>
                 </td>
                 <td className="px-3 py-3 text-sm text-slate-600">
-                  {record.utr_number || '—'}
+                  {record.utr_number || '\u2014'}
                 </td>
                 <td className="px-3 py-3">
                   {record.needs_review === 'true' && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
                       <AlertTriangle className="h-3 w-3" />
-                      Needs review
+                      {t('extraction.needsReview')}
                     </span>
                   )}
                 </td>
@@ -228,16 +230,16 @@ export default function RecordsTable({
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-900">
-                      {record.trader_name || 'Unknown Trader'}
+                      {record.trader_name || t('history.unknownTrader')}
                     </p>
                     <p className="text-xs text-slate-500">
                       {formatDisplayDate(record.bill_date)}
-                      {record.invoice_number && ` · ${record.invoice_number}`}
+                      {record.invoice_number && ` \u00b7 ${record.invoice_number}`}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold text-slate-900">
-                      ₹{formatCurrency(record.bill_amount)}
+                      \u20B9{formatCurrency(record.bill_amount)}
                     </p>
                     <span
                       className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -252,7 +254,7 @@ export default function RecordsTable({
                   <div className="mt-1.5">
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
                       <AlertTriangle className="h-3 w-3" />
-                      Needs review
+                      {t('extraction.needsReview')}
                     </span>
                   </div>
                 )}
@@ -266,11 +268,11 @@ export default function RecordsTable({
       <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
         <div className="flex items-center gap-2 text-sm text-slate-500">
           <span>
-            {startRecord}–{endRecord} of {totalFiltered}
+            {t('history.pagination', { start: startRecord, end: endRecord, total: totalFiltered })}
           </span>
           <span className="text-slate-300">|</span>
           <label className="flex items-center gap-1">
-            <span>Per page:</span>
+            <span>{t('history.perPage')}</span>
             <select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}

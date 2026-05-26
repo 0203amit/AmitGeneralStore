@@ -1,3 +1,5 @@
+@import 'react-datepicker/dist/react-datepicker.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,4 +15,34 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+}
+
+/* react-datepicker Tailwind overrides */
+.react-datepicker {
+  @apply border-slate-200 font-sans text-sm shadow-lg;
+}
+
+.react-datepicker__header {
+  @apply border-b-slate-200 bg-slate-50;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--keyboard-selected {
+  @apply bg-indigo-500;
+}
+
+.react-datepicker__day:hover {
+  @apply bg-indigo-100;
+}
+
+.react-datepicker-popper {
+  @apply z-50;
+}
+
+.datepicker-amber .react-datepicker__input-container input {
+  @apply border-amber-300 bg-amber-50;
+}
+
+.datepicker-amber .react-datepicker__input-container input:focus {
+  @apply border-amber-500 ring-amber-200;
 }

@@ -5,6 +5,7 @@
  * removable filter chips, and "Clear All Filters" button.
  */
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   Calendar,
@@ -40,6 +41,7 @@ export default function FilterBar({
   onFiltersChange,
   uniqueTraders = [],
 }) {
+  const { t } = useTranslation();
   const [showFilters, setShowFilters] = useState(false);
   const [traderDropdownOpen, setTraderDropdownOpen] = useState(false);
   const traderRef = useRef(null);
@@ -136,8 +138,8 @@ export default function FilterBar({
   });
   if (filters.amountMin || filters.amountMax) {
     const parts = [];
-    if (filters.amountMin) parts.push(`Min: ₹${filters.amountMin}`);
-    if (filters.amountMax) parts.push(`Max: ₹${filters.amountMax}`);
+    if (filters.amountMin) parts.push(`Min: \u20B9${filters.amountMin}`);
+    if (filters.amountMax) parts.push(`Max: \u20B9${filters.amountMax}`);
     chips.push({ type: 'amount', label: parts.join(' - '), value: null });
   }
   (filters.traders || []).forEach((trader) => {
@@ -154,7 +156,7 @@ export default function FilterBar({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search by trader, invoice, UTR, payer, payee..."
+            placeholder={t('history.searchPlaceholder')}
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
           />
           {searchQuery && (
@@ -175,7 +177,7 @@ export default function FilterBar({
           }`}
         >
           <Filter className="h-4 w-4" />
-          <span className="hidden sm:inline">Filters</span>
+          <span className="hidden sm:inline">{t('history.filters')}</span>
           {hasActiveFilters && (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-primary text-xs text-white">
               {chips.length}
@@ -205,7 +207,7 @@ export default function FilterBar({
             onClick={clearAllFilters}
             className="text-xs font-medium text-slate-500 hover:text-red-600"
           >
-            Clear all
+            {t('history.clearAll')}
           </button>
         </div>
       )}
@@ -218,7 +220,7 @@ export default function FilterBar({
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">
                 <Calendar className="mr-1 inline h-3.5 w-3.5" />
-                Date Range
+                {t('history.dateRange')}
               </label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {DATE_PRESETS.map((preset) => (
@@ -227,7 +229,7 @@ export default function FilterBar({
                     onClick={() => applyPreset(preset.value)}
                     className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 transition hover:border-brand-primary hover:text-brand-primary"
                   >
-                    {preset.label}
+                    {t(preset.labelKey)}
                   </button>
                 ))}
               </div>
@@ -240,7 +242,7 @@ export default function FilterBar({
                   }
                   className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs focus:border-brand-primary focus:outline-none"
                 />
-                <span className="text-xs text-slate-400">to</span>
+                <span className="text-xs text-slate-400">{t('history.to')}</span>
                 <input
                   type="date"
                   value={filters.dateEnd || ''}
@@ -255,7 +257,7 @@ export default function FilterBar({
             {/* Payment mode */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                Payment Mode
+                {t('history.paymentMode')}
               </label>
               <div className="flex flex-wrap gap-2">
                 {PAYMENT_MODES.map((mode) => {
@@ -285,12 +287,12 @@ export default function FilterBar({
             {/* Amount range */}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                Amount Range (₹)
+                {t('history.amountRange')}
               </label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  placeholder="Min"
+                  placeholder={t('history.min')}
                   value={filters.amountMin || ''}
                   onChange={(e) =>
                     onFiltersChange({ ...filters, amountMin: e.target.value || null })
@@ -298,10 +300,10 @@ export default function FilterBar({
                   className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs focus:border-brand-primary focus:outline-none"
                   min="0"
                 />
-                <span className="text-xs text-slate-400">to</span>
+                <span className="text-xs text-slate-400">{t('history.to')}</span>
                 <input
                   type="number"
-                  placeholder="Max"
+                  placeholder={t('history.max')}
                   value={filters.amountMax || ''}
                   onChange={(e) =>
                     onFiltersChange({ ...filters, amountMax: e.target.value || null })
@@ -315,7 +317,7 @@ export default function FilterBar({
             {/* Trader multi-select dropdown */}
             <div ref={traderRef}>
               <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                Trader
+                {t('history.trader')}
               </label>
               <button
                 onClick={() => setTraderDropdownOpen((prev) => !prev)}
@@ -323,15 +325,15 @@ export default function FilterBar({
               >
                 <span>
                   {(filters.traders || []).length > 0
-                    ? `${filters.traders.length} selected`
-                    : 'All traders'}
+                    ? t('history.traderSelected', { count: filters.traders.length })
+                    : t('history.allTraders')}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
               {traderDropdownOpen && (
                 <div className="absolute z-30 mt-1 max-h-48 w-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
                   {uniqueTraders.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-slate-400">No traders found</p>
+                    <p className="px-3 py-2 text-xs text-slate-400">{t('history.noTradersFound')}</p>
                   ) : (
                     uniqueTraders.map((trader) => {
                       const isSelected = (filters.traders || []).includes(trader);

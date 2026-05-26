@@ -6,9 +6,10 @@
 import { v4 as uuidv4 } from 'uuid';
 // jsPDF and JSZip are dynamically imported where used to reduce initial bundle size
 import { format } from 'date-fns';
+import i18n from '../i18n/i18n';
 import { uploadImage, deleteImage, getImageBlob } from './driveService';
 import { appendRecord, updateRecord, getAllRecords, computeCompositeKey } from './sheetsService';
-import { BUSINESS_NAME, PDF_TITLE, PDF_FOOTER, BACKUP_FILENAME_PREFIX } from '../config/branding';
+import { BUSINESS_NAME, BACKUP_FILENAME_PREFIX } from '../config/branding';
 import { formatDisplayDate, formatCurrency } from '../utils/dateHelpers';
 import { generateCsvString, buildCsvFilename } from '../utils/csvExporter';
 
@@ -32,6 +33,11 @@ const CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN;
 
 /* ── Private Helpers ─────────────────────────────────────────────────── */
 
+/** Shorthand for i18n.t to get current-language translation. */
+function t(key, options) {
+  return i18n.t(key, options);
+}
+
 /** Convert a Blob to a data URL string for jsPDF embedding. */
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -52,9 +58,9 @@ function getImageDimensions(dataUrl) {
   });
 }
 
-/** Safe field accessor with 'N/A' fallback. */
+/** Safe field accessor with translated 'N/A' fallback. */
 function field(value) {
-  return value || 'N/A';
+  return value || t('common.notAvailable');
 }
 
 /** Draw a labeled row on the PDF at the given y position. Returns new y. */
@@ -71,7 +77,7 @@ function drawLabelValue(doc, label, value, x, y, labelWidth) {
 function addPageFooter(doc, pageNum, totalPages) {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
-  doc.text(PDF_FOOTER, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
+  doc.text(BUSINESS_NAME, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
   doc.text(`Page ${pageNum} of ${totalPages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 10, { align: 'right' });
   doc.setTextColor(0, 0, 0);
 }
@@ -89,7 +95,7 @@ function addCoverPage(doc, record, generatedAt) {
   // PDF title
   doc.setFontSize(18);
   doc.setTextColor(80, 80, 80);
-  doc.text(PDF_TITLE, PAGE_WIDTH / 2, y, { align: 'center' });
+  doc.text(t('pdf.paymentProof'), PAGE_WIDTH / 2, y, { align: 'center' });
   doc.setTextColor(0, 0, 0);
   y += 10;
 
@@ -103,31 +109,31 @@ function addCoverPage(doc, record, generatedAt) {
   const labelWidth = 45;
   doc.setFontSize(10);
 
-  y = drawLabelValue(doc, 'Trader:', field(record.trader_name), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.trader'), field(record.trader_name), MARGIN, y, labelWidth);
   if (record.trader_address) {
-    y = drawLabelValue(doc, 'Address:', field(record.trader_address), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.address'), field(record.trader_address), MARGIN, y, labelWidth);
   }
-  y = drawLabelValue(doc, 'Invoice No.:', field(record.invoice_number), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, 'Bill Date:', formatDisplayDate(record.bill_date) || 'N/A', MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, 'Bill Amount:', record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : 'N/A', MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, 'Currency:', field(record.currency), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.invoiceNo'), field(record.invoice_number), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.billDate'), formatDisplayDate(record.bill_date) || t('common.notAvailable'), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.billAmount'), record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : t('common.notAvailable'), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.currency'), field(record.currency), MARGIN, y, labelWidth);
   y += 5;
 
   // Payment details
   if (record.payment_mode === 'gpay') {
-    y = drawLabelValue(doc, 'UPI Txn ID:', field(record.upi_transaction_id), MARGIN, y, labelWidth);
-    y = drawLabelValue(doc, 'Google Txn ID:', field(record.google_transaction_id), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.upiTxnId'), field(record.upi_transaction_id), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.googleTxnId'), field(record.google_transaction_id), MARGIN, y, labelWidth);
   } else {
-    y = drawLabelValue(doc, 'UTR Number:', field(record.utr_number), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.utrNumber'), field(record.utr_number), MARGIN, y, labelWidth);
   }
-  y = drawLabelValue(doc, 'Payment Date:', formatDisplayDate(record.payment_date) || 'N/A', MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, 'Payment Mode:', PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode), MARGIN, y, labelWidth);
-  y = drawLabelValue(doc, 'Paid Amount:', record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : 'N/A', MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.paymentDate'), formatDisplayDate(record.payment_date) || t('common.notAvailable'), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.paymentMode'), PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode), MARGIN, y, labelWidth);
+  y = drawLabelValue(doc, t('pdf.paidAmount'), record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : t('common.notAvailable'), MARGIN, y, labelWidth);
   if (record.payer_name) {
-    y = drawLabelValue(doc, 'Payer:', field(record.payer_name), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.payer'), field(record.payer_name), MARGIN, y, labelWidth);
   }
   if (record.payee_name) {
-    y = drawLabelValue(doc, 'Payee:', field(record.payee_name), MARGIN, y, labelWidth);
+    y = drawLabelValue(doc, t('pdf.payee'), field(record.payee_name), MARGIN, y, labelWidth);
   }
   y += 10;
 
@@ -138,9 +144,9 @@ function addCoverPage(doc, record, generatedAt) {
 
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Record created: ${record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : 'N/A'}`, MARGIN, y);
+  doc.text(t('pdf.recordCreated', { date: record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : t('common.notAvailable') }), MARGIN, y);
   y += 5;
-  doc.text(`Proof generated: ${generatedAt}`, MARGIN, y);
+  doc.text(t('pdf.proofGenerated', { date: generatedAt }), MARGIN, y);
   doc.setTextColor(0, 0, 0);
 }
 
@@ -158,7 +164,7 @@ async function addImagePage(doc, fileId, caption) {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(12);
     doc.setTextColor(150, 150, 150);
-    doc.text('Image not available', PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: 'center' });
+    doc.text(t('pdf.imageNotAvailable'), PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: 'center' });
     doc.setTextColor(0, 0, 0);
     return;
   }
@@ -172,7 +178,7 @@ async function addImagePage(doc, fileId, caption) {
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(12);
       doc.setTextColor(150, 150, 150);
-      doc.text('Image could not be loaded', PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: 'center' });
+      doc.text(t('pdf.imageLoadFailed'), PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: 'center' });
       doc.setTextColor(0, 0, 0);
       return;
     }
@@ -191,7 +197,7 @@ async function addImagePage(doc, fileId, caption) {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(12);
     doc.setTextColor(150, 150, 150);
-    doc.text('Image could not be loaded', PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: 'center' });
+    doc.text(t('pdf.imageLoadFailed'), PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: 'center' });
     doc.setTextColor(0, 0, 0);
   }
 }
@@ -202,34 +208,35 @@ function addSummaryPage(doc, record, generatedAt) {
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
-  doc.text('Data Summary', PAGE_WIDTH / 2, y + 5, { align: 'center' });
+  doc.text(t('pdf.dataSummary'), PAGE_WIDTH / 2, y + 5, { align: 'center' });
   y += 15;
 
   doc.setDrawColor(200, 200, 200);
   doc.line(MARGIN, y, PAGE_WIDTH - MARGIN, y);
   y += 8;
 
+  const na = t('common.notAvailable');
   const rows = [
-    ['Trader Name', field(record.trader_name)],
-    ['Trader Address', field(record.trader_address)],
-    ['Invoice Number', field(record.invoice_number)],
-    ['Bill Date', formatDisplayDate(record.bill_date) || 'N/A'],
-    ['Bill Amount', record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : 'N/A'],
-    ['Currency', field(record.currency)],
+    [t('pdf.traderName'), field(record.trader_name)],
+    [t('pdf.traderAddress'), field(record.trader_address)],
+    [t('pdf.invoiceNumber'), field(record.invoice_number)],
+    [t('pdf.billDateLabel'), formatDisplayDate(record.bill_date) || na],
+    [t('pdf.billAmountLabel'), record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : na],
+    [t('pdf.currencyLabel'), field(record.currency)],
     ...(record.payment_mode === 'gpay'
       ? [
-          ['UPI Transaction ID', field(record.upi_transaction_id)],
-          ['Google Transaction ID', field(record.google_transaction_id)],
+          [t('pdf.upiTransactionId'), field(record.upi_transaction_id)],
+          [t('pdf.googleTransactionId'), field(record.google_transaction_id)],
         ]
-      : [['UTR Number', field(record.utr_number)]]),
-    ['Payment Date', formatDisplayDate(record.payment_date) || 'N/A'],
-    ['Payment Mode', PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode)],
-    ['Paid Amount', record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : 'N/A'],
-    ['Payer Name', field(record.payer_name)],
-    ['Payee Name', field(record.payee_name)],
-    ['Record ID', field(record.record_id)],
-    ['Created At', record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : 'N/A'],
-    ['Status', field(record.status)],
+      : [[t('pdf.utrNumberLabel'), field(record.utr_number)]]),
+    [t('pdf.paymentDateLabel'), formatDisplayDate(record.payment_date) || na],
+    [t('pdf.paymentModeLabel'), PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode)],
+    [t('pdf.paidAmountLabel'), record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : na],
+    [t('pdf.payerName'), field(record.payer_name)],
+    [t('pdf.payeeName'), field(record.payee_name)],
+    [t('pdf.recordId'), field(record.record_id)],
+    [t('pdf.createdAt'), record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : na],
+    [t('pdf.status'), field(record.status)],
   ];
 
   const colWidth = 50;
@@ -258,7 +265,7 @@ function addSummaryPage(doc, record, generatedAt) {
 
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Proof generated: ${generatedAt}`, MARGIN, y);
+  doc.text(t('pdf.proofGenerated', { date: generatedAt }), MARGIN, y);
   doc.setTextColor(0, 0, 0);
 }
 
@@ -273,7 +280,7 @@ function addBulkCoverPage(doc, records, generatedAt) {
 
   doc.setFontSize(18);
   doc.setTextColor(80, 80, 80);
-  doc.text('Bulk Payment Proof', PAGE_WIDTH / 2, y, { align: 'center' });
+  doc.text(t('pdf.bulkPaymentProof'), PAGE_WIDTH / 2, y, { align: 'center' });
   doc.setTextColor(0, 0, 0);
   y += 10;
 
@@ -283,7 +290,7 @@ function addBulkCoverPage(doc, records, generatedAt) {
   y += 10;
 
   doc.setFontSize(11);
-  doc.text(`${records.length} record${records.length !== 1 ? 's' : ''} included`, MARGIN, y);
+  doc.text(t('pdf.recordsIncluded', { count: records.length }), MARGIN, y);
   y += 10;
 
   // Table header
@@ -292,31 +299,32 @@ function addBulkCoverPage(doc, records, generatedAt) {
   doc.setFillColor(241, 245, 249);
   doc.rect(MARGIN, y - 4, CONTENT_WIDTH, 8, 'F');
   doc.text('#', MARGIN + 2, y);
-  doc.text('Trader', MARGIN + 12, y);
-  doc.text('Invoice', MARGIN + 80, y);
-  doc.text('Date', MARGIN + 120, y);
-  doc.text('Amount', MARGIN + 150, y);
+  doc.text(t('pdf.tableTrader'), MARGIN + 12, y);
+  doc.text(t('pdf.tableInvoice'), MARGIN + 80, y);
+  doc.text(t('pdf.tableDate'), MARGIN + 120, y);
+  doc.text(t('pdf.tableAmount'), MARGIN + 150, y);
   y += 8;
 
   // Table rows
   doc.setFont('helvetica', 'normal');
+  const na = t('common.notAvailable');
   records.forEach((record, i) => {
     if (y > PAGE_HEIGHT - MARGIN - 20) {
       doc.addPage();
       y = MARGIN + 10;
     }
     doc.text(String(i + 1), MARGIN + 2, y);
-    doc.text((record.trader_name || 'N/A').substring(0, 30), MARGIN + 12, y);
-    doc.text((record.invoice_number || 'N/A').substring(0, 18), MARGIN + 80, y);
-    doc.text(formatDisplayDate(record.bill_date) || 'N/A', MARGIN + 120, y);
-    doc.text(record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : 'N/A', MARGIN + 150, y);
+    doc.text((record.trader_name || na).substring(0, 30), MARGIN + 12, y);
+    doc.text((record.invoice_number || na).substring(0, 18), MARGIN + 80, y);
+    doc.text(formatDisplayDate(record.bill_date) || na, MARGIN + 120, y);
+    doc.text(record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : na, MARGIN + 150, y);
     y += 7;
   });
 
   y += 10;
   doc.setFontSize(8);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Proof generated: ${generatedAt}`, MARGIN, y);
+  doc.text(t('pdf.proofGenerated', { date: generatedAt }), MARGIN, y);
   doc.setTextColor(0, 0, 0);
 }
 
@@ -497,9 +505,9 @@ const COMPOSITE_KEY_FIELDS = ['trader_name', 'invoice_number', 'bill_date'];
  */
 export async function editRecord(recordId, changes) {
   // Reject immutable field changes
-  for (const field of IMMUTABLE_FIELDS) {
-    if (field in changes) {
-      throw new Error(`Cannot modify immutable field: ${field}`);
+  for (const f of IMMUTABLE_FIELDS) {
+    if (f in changes) {
+      throw new Error(`Cannot modify immutable field: ${f}`);
     }
   }
 
@@ -529,7 +537,7 @@ export async function editRecord(recordId, changes) {
   }
 
   // Recompute composite key if any key field changed
-  const keyFieldChanged = COMPOSITE_KEY_FIELDS.some((f) => changedFields.includes(f));
+  const keyFieldChanged = COMPOSITE_KEY_FIELDS.some((fld) => changedFields.includes(fld));
   if (keyFieldChanged) {
     merged.composite_key = computeCompositeKey(
       merged.trader_name,
@@ -577,20 +585,21 @@ export async function editRecord(recordId, changes) {
  * @returns {string} Multi-line plain-text summary
  */
 export function generatePlainTextSummary(record) {
+  const na = t('common.notAvailable');
   const lines = [
-    `--- ${PDF_TITLE} ---`,
-    `Trader: ${field(record.trader_name)}`,
-    `Invoice: ${field(record.invoice_number)}`,
-    `Bill Date: ${formatDisplayDate(record.bill_date) || 'N/A'}`,
-    `Amount: ${record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : 'N/A'}`,
-    `Payment Mode: ${PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode)}`,
+    `--- ${t('pdf.paymentProof')} ---`,
+    t('plaintext.trader', { name: field(record.trader_name) }),
+    t('plaintext.invoice', { number: field(record.invoice_number) }),
+    t('plaintext.billDate', { date: formatDisplayDate(record.bill_date) || na }),
+    t('plaintext.amount', { amount: record.bill_amount ? formatCurrency(record.bill_amount) : na }),
+    t('plaintext.paymentMode', { mode: PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode) }),
     ...(record.payment_mode === 'gpay'
       ? [
-          `UPI Transaction ID: ${field(record.upi_transaction_id)}`,
-          `Google Transaction ID: ${field(record.google_transaction_id)}`,
+          t('plaintext.upiTransactionId', { id: field(record.upi_transaction_id) }),
+          t('plaintext.googleTransactionId', { id: field(record.google_transaction_id) }),
         ]
-      : [`UTR Number: ${field(record.utr_number)}`]),
-    `Payment Date: ${formatDisplayDate(record.payment_date) || 'N/A'}`,
+      : [t('plaintext.utrNumber', { number: field(record.utr_number) })]),
+    t('plaintext.paymentDate', { date: formatDisplayDate(record.payment_date) || na }),
     `--- ${BUSINESS_NAME} ---`,
   ];
   return lines.join('\n');
@@ -615,11 +624,11 @@ export async function generateProofPacketPDF(record) {
 
   // Page 2: Bill image
   doc.addPage();
-  await addImagePage(doc, record.bill_image_file_id, 'Bill Image');
+  await addImagePage(doc, record.bill_image_file_id, t('detail.billImage'));
 
   // Page 3: Payment image
   doc.addPage();
-  await addImagePage(doc, record.payment_image_file_id, 'Payment Receipt Image');
+  await addImagePage(doc, record.payment_image_file_id, t('detail.paymentReceipt'));
 
   // Page 4: Data summary
   doc.addPage();
@@ -659,10 +668,10 @@ export async function generateBulkProofPacketPDF(records) {
     addCoverPage(doc, record, generatedAt);
 
     doc.addPage();
-    await addImagePage(doc, record.bill_image_file_id, 'Bill Image');
+    await addImagePage(doc, record.bill_image_file_id, t('detail.billImage'));
 
     doc.addPage();
-    await addImagePage(doc, record.payment_image_file_id, 'Payment Receipt Image');
+    await addImagePage(doc, record.payment_image_file_id, t('detail.paymentReceipt'));
 
     doc.addPage();
     addSummaryPage(doc, record, generatedAt);
@@ -747,12 +756,12 @@ export async function downloadFullBackup(onProgress) {
     `${BUSINESS_NAME} \u2014 Full Backup`,
     `Generated: ${format(new Date(), 'dd MMM yyyy, HH:mm')}`,
     '',
-    'Contents:',
-    `- ${csvFilename} \u2014 All receipt records (including archived)`,
-    '- bills/ \u2014 Bill images from Google Drive',
-    '- payments/ \u2014 Payment receipt images from Google Drive',
+    t('backup.contents'),
+    `- ${csvFilename} \u2014 ${t('backup.csvDesc', { filename: csvFilename }).split(' \u2014 ')[1] || 'All receipt records (including archived)'}`,
+    `- ${t('backup.billsDesc')}`,
+    `- ${t('backup.paymentsDesc')}`,
     '',
-    'To restore: Import the CSV into Google Sheets and upload images to Google Drive.',
+    t('backup.restoreInstructions'),
   ].join('\n');
   zip.file('README.txt', readme);
 

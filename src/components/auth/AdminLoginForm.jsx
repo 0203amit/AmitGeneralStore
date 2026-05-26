@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import useAuth from '../../hooks/useAuth';
 
 /**
@@ -6,6 +7,7 @@ import useAuth from '../../hooks/useAuth';
  * Uses Service Account authentication to access the shared Google Drive/Sheets.
  */
 export default function AdminLoginForm() {
+  const { t } = useTranslation();
   const { adminSignIn, loading, adminLoginPhase } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +17,7 @@ export default function AdminLoginForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username.trim() || !password) {
-      setLocalError('Please enter both username and password');
+      setLocalError(t('auth.enterBothFields'));
       return;
     }
     setLocalError(null);
@@ -23,7 +25,7 @@ export default function AdminLoginForm() {
     try {
       await adminSignIn(username.trim(), password);
     } catch (err) {
-      setLocalError(err.message || 'Sign-in failed');
+      setLocalError(err.message || t('auth.signInFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -35,7 +37,7 @@ export default function AdminLoginForm() {
     <form onSubmit={handleSubmit} className="w-full max-w-xs space-y-4">
       <div>
         <label htmlFor="admin-username" className="block text-sm font-medium text-slate-700">
-          Username
+          {t('auth.username')}
         </label>
         <input
           id="admin-username"
@@ -45,13 +47,13 @@ export default function AdminLoginForm() {
           onChange={(e) => setUsername(e.target.value)}
           disabled={isDisabled}
           className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Enter username"
+          placeholder={t('auth.enterUsername')}
         />
       </div>
 
       <div>
         <label htmlFor="admin-password" className="block text-sm font-medium text-slate-700">
-          Password
+          {t('auth.password')}
         </label>
         <input
           id="admin-password"
@@ -61,7 +63,7 @@ export default function AdminLoginForm() {
           onChange={(e) => setPassword(e.target.value)}
           disabled={isDisabled}
           className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Enter password"
+          placeholder={t('auth.enterPassword')}
         />
       </div>
 
@@ -75,19 +77,19 @@ export default function AdminLoginForm() {
         className="w-full rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {adminLoginPhase === 'verifying'
-          ? 'Verifying credentials...'
+          ? t('auth.verifyingCredentials')
           : adminLoginPhase === 'google-signin'
-            ? 'Connecting to Google...'
+            ? t('auth.connectingGoogle')
             : adminLoginPhase === 'provisioning'
-              ? 'Setting up storage...'
+              ? t('auth.settingUpStorage')
               : submitting
-                ? 'Signing in...'
-                : 'Sign in as Admin'}
+                ? t('auth.signingIn')
+                : t('auth.signInAsAdmin')}
       </button>
 
       {adminLoginPhase === 'google-signin' && (
         <p className="text-xs text-slate-500 text-center">
-          A Google sign-in popup may appear for first-time setup.
+          {t('auth.googleSignInPopupHint')}
         </p>
       )}
     </form>

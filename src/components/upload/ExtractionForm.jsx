@@ -1,5 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
-import { toDateInputDisplay, fromDateInputDisplay } from '../../utils/dateHelpers';
+import { useTranslation } from 'react-i18next';
+import DatePicker from 'react-datepicker';
+import { parse, format } from 'date-fns';
 
 const CONFIDENCE_THRESHOLD = 0.7;
 
@@ -17,8 +19,26 @@ const PAYMENT_MODE_OPTIONS = [
  * Single field input with optional low-confidence indicator.
  */
 function FieldInput({ label, value, onChange, confidence, type = 'text', required = false, disabled }) {
+  const { t } = useTranslation();
   const isLowConfidence = confidence !== undefined && confidence < CONFIDENCE_THRESHOLD;
   const isDate = type === 'date';
+
+  const dateValue = isDate && value
+    ? (() => {
+        try {
+          const d = parse(value, 'yyyy-MM-dd', new Date());
+          return isNaN(d.getTime()) ? null : d;
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
+  const baseInputClass = `w-full rounded-md border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
+    isLowConfidence
+      ? 'border-amber-300 bg-amber-50 focus:border-amber-500 focus:ring-amber-200'
+      : 'border-slate-300 bg-white focus:border-indigo-500 focus:ring-indigo-200'
+  } disabled:cursor-not-allowed disabled:bg-slate-100`;
 
   return (
     <div className="space-y-1">
@@ -28,22 +48,34 @@ function FieldInput({ label, value, onChange, confidence, type = 'text', require
         {isLowConfidence && (
           <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700">
             <AlertTriangle className="h-3 w-3" />
-            Needs review
+            {t('extraction.needsReview')}
           </span>
         )}
       </label>
-      <input
-        type={isDate ? 'text' : type}
-        value={isDate ? toDateInputDisplay(value) : value}
-        onChange={(e) => onChange(isDate ? fromDateInputDisplay(e.target.value) : e.target.value)}
-        placeholder={isDate ? 'DD/MM/YYYY' : undefined}
-        disabled={disabled}
-        className={`w-full rounded-md border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
-          isLowConfidence
-            ? 'border-amber-300 bg-amber-50 focus:border-amber-500 focus:ring-amber-200'
-            : 'border-slate-300 bg-white focus:border-indigo-500 focus:ring-indigo-200'
-        } disabled:cursor-not-allowed disabled:bg-slate-100`}
-      />
+      {isDate ? (
+        <div className={isLowConfidence ? 'datepicker-amber' : ''}>
+          <DatePicker
+            selected={dateValue}
+            onChange={(date) => onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+            dateFormat="dd/MM/yyyy"
+            placeholderText={t('extraction.datePlaceholder')}
+            disabled={disabled}
+            className={baseInputClass}
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="select"
+            isClearable={!disabled}
+          />
+        </div>
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
+          className={baseInputClass}
+        />
+      )}
     </div>
   );
 }
@@ -67,6 +99,7 @@ export default function ExtractionForm({
   onPaymentFieldChange,
   disabled = false,
 }) {
+  const { t } = useTranslation();
   const bc = billFields.field_confidences || {};
   const pc = paymentFields.field_confidences || {};
 
@@ -74,10 +107,10 @@ export default function ExtractionForm({
     <div className="space-y-6">
       {/* Bill Fields */}
       <fieldset className="rounded-lg border border-slate-200 p-4">
-        <legend className="px-2 text-sm font-semibold text-slate-800">Bill Details</legend>
+        <legend className="px-2 text-sm font-semibold text-slate-800">{t('extraction.billDetails')}</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldInput
-            label="Trader Name"
+            label={t('extraction.traderName')}
             value={billFields.trader_name}
             onChange={(v) => onBillFieldChange('trader_name', v)}
             confidence={bc.trader_name}
@@ -85,14 +118,14 @@ export default function ExtractionForm({
             disabled={disabled}
           />
           <FieldInput
-            label="Trader Address"
+            label={t('extraction.traderAddress')}
             value={billFields.trader_address}
             onChange={(v) => onBillFieldChange('trader_address', v)}
             confidence={bc.trader_address}
             disabled={disabled}
           />
           <FieldInput
-            label="Invoice Number"
+            label={t('extraction.invoiceNumber')}
             value={billFields.invoice_number}
             onChange={(v) => onBillFieldChange('invoice_number', v)}
             confidence={bc.invoice_number}
@@ -100,7 +133,7 @@ export default function ExtractionForm({
             disabled={disabled}
           />
           <FieldInput
-            label="Bill Date"
+            label={t('extraction.billDate')}
             value={billFields.bill_date}
             onChange={(v) => onBillFieldChange('bill_date', v)}
             confidence={bc.bill_date}
@@ -109,7 +142,7 @@ export default function ExtractionForm({
             disabled={disabled}
           />
           <FieldInput
-            label="Bill Amount (₹)"
+            label={t('extraction.billAmount')}
             value={billFields.bill_amount}
             onChange={(v) => onBillFieldChange('bill_amount', v)}
             confidence={bc.bill_amount}
@@ -118,7 +151,7 @@ export default function ExtractionForm({
             disabled={disabled}
           />
           <FieldInput
-            label="Currency"
+            label={t('extraction.currency')}
             value={billFields.currency}
             onChange={(v) => onBillFieldChange('currency', v)}
             confidence={bc.currency}
@@ -129,19 +162,19 @@ export default function ExtractionForm({
 
       {/* Payment Fields */}
       <fieldset className="rounded-lg border border-slate-200 p-4">
-        <legend className="px-2 text-sm font-semibold text-slate-800">Payment Details</legend>
+        <legend className="px-2 text-sm font-semibold text-slate-800">{t('extraction.paymentDetails')}</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           {paymentFields.payment_mode === 'gpay' ? (
             <>
               <FieldInput
-                label="UPI Transaction ID"
+                label={t('extraction.upiTransactionId')}
                 value={paymentFields.upi_transaction_id}
                 onChange={(v) => onPaymentFieldChange('upi_transaction_id', v)}
                 confidence={pc.upi_transaction_id}
                 disabled={disabled}
               />
               <FieldInput
-                label="Google Transaction ID"
+                label={t('extraction.googleTransactionId')}
                 value={paymentFields.google_transaction_id}
                 onChange={(v) => onPaymentFieldChange('google_transaction_id', v)}
                 confidence={pc.google_transaction_id}
@@ -150,7 +183,7 @@ export default function ExtractionForm({
             </>
           ) : (
             <FieldInput
-              label="UTR Number"
+              label={t('extraction.utrNumber')}
               value={paymentFields.utr_number}
               onChange={(v) => onPaymentFieldChange('utr_number', v)}
               confidence={pc.utr_number}
@@ -159,7 +192,7 @@ export default function ExtractionForm({
             />
           )}
           <FieldInput
-            label="Payment Date"
+            label={t('extraction.paymentDate')}
             value={paymentFields.payment_date}
             onChange={(v) => onPaymentFieldChange('payment_date', v)}
             confidence={pc.payment_date}
@@ -170,11 +203,11 @@ export default function ExtractionForm({
           {/* Payment Mode: dropdown */}
           <div className="space-y-1">
             <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
-              Payment Mode <span className="text-red-500">*</span>
+              {t('extraction.paymentMode')} <span className="text-red-500">*</span>
               {(pc.payment_mode || 0) < CONFIDENCE_THRESHOLD && (
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-700">
                   <AlertTriangle className="h-3 w-3" />
-                  Needs review
+                  {t('extraction.needsReview')}
                 </span>
               )}
             </label>
@@ -192,7 +225,7 @@ export default function ExtractionForm({
             </select>
           </div>
           <FieldInput
-            label="Paid Amount (₹)"
+            label={t('extraction.paidAmount')}
             value={paymentFields.paid_amount}
             onChange={(v) => onPaymentFieldChange('paid_amount', v)}
             confidence={pc.paid_amount}
@@ -201,14 +234,14 @@ export default function ExtractionForm({
             disabled={disabled}
           />
           <FieldInput
-            label="Payer Name"
+            label={t('extraction.payerName')}
             value={paymentFields.payer_name}
             onChange={(v) => onPaymentFieldChange('payer_name', v)}
             confidence={pc.payer_name}
             disabled={disabled}
           />
           <FieldInput
-            label="Payee Name"
+            label={t('extraction.payeeName')}
             value={paymentFields.payee_name}
             onChange={(v) => onPaymentFieldChange('payee_name', v)}
             confidence={pc.payee_name}

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import useUpload from '../../hooks/useUpload';
 import { useToast } from '../shared/Toast';
 import { buildPageTitle } from '../../config/branding';
@@ -9,6 +10,7 @@ import LoadingSpinner from '../shared/LoadingSpinner';
 import { AlertTriangle, CheckCircle, FileText } from 'lucide-react';
 
 export default function UploadPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     billFile,
@@ -42,7 +44,7 @@ export default function UploadPage() {
   // Success toast
   useEffect(() => {
     if (step === 'done') {
-      addToast({ type: 'success', message: 'Record saved successfully!' });
+      addToast({ type: 'success', message: t('upload.savedSuccess') });
     }
   }, [step, addToast]);
 
@@ -58,9 +60,9 @@ export default function UploadPage() {
 
   return (
     <div className="px-4 py-6 sm:py-8">
-      <h1 className="text-2xl font-bold text-slate-900">Upload Receipt</h1>
+      <h1 className="text-2xl font-bold text-slate-900">{t('upload.title')}</h1>
       <p className="mt-1 text-sm text-slate-500">
-        Add a bill image and its payment receipt to create a new record.
+        {t('upload.subtitle')}
       </p>
 
       {/* Error banner */}
@@ -74,13 +76,13 @@ export default function UploadPage() {
       {step === 'done' && (
         <div className="mt-8 flex flex-col items-center gap-4 rounded-lg border border-green-200 bg-green-50 p-8">
           <CheckCircle className="h-12 w-12 text-green-600" />
-          <p className="text-lg font-medium text-green-800">Record saved successfully!</p>
+          <p className="text-lg font-medium text-green-800">{t('upload.savedSuccess')}</p>
           <button
             type="button"
             onClick={reset}
             className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            Upload Another
+            {t('upload.uploadAnother')}
           </button>
         </div>
       )}
@@ -91,8 +93,8 @@ export default function UploadPage() {
           {/* Dual image zones */}
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <ImageDropzone
-              label="Bill Image"
-              helperText="Take a photo of the trader bill"
+              label={t('upload.billImage')}
+              helperText={t('upload.billHelperText')}
               captureMode="environment"
               file={billFile}
               previewUrl={billPreview}
@@ -101,8 +103,8 @@ export default function UploadPage() {
               disabled={isProcessing}
             />
             <ImageDropzone
-              label="Payment Receipt"
-              helperText="Upload the payment screenshot or photo"
+              label={t('upload.paymentReceipt')}
+              helperText={t('upload.paymentHelperText')}
               captureMode={null}
               file={paymentFile}
               previewUrl={paymentPreview}
@@ -115,12 +117,12 @@ export default function UploadPage() {
           {/* Hint when only one image selected */}
           {billPreview && !paymentPreview && (
             <p className="mt-4 text-center text-sm text-amber-600">
-              Add a payment receipt to continue.
+              {t('upload.addPaymentToContinue')}
             </p>
           )}
           {!billPreview && paymentPreview && (
             <p className="mt-4 text-center text-sm text-amber-600">
-              Add a bill image to continue.
+              {t('upload.addBillToContinue')}
             </p>
           )}
 
@@ -134,7 +136,7 @@ export default function UploadPage() {
                 className="flex items-center gap-2 rounded-lg bg-indigo-600 px-8 py-3 text-sm font-medium text-white shadow transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <FileText className="h-4 w-4" />
-                Extract &amp; Review
+                {t('upload.extractAndReview')}
               </button>
             </div>
           )}
@@ -155,7 +157,7 @@ export default function UploadPage() {
             <>
               <div className="mt-8">
                 <h2 className="mb-4 text-lg font-semibold text-slate-800">
-                  Review Extracted Fields
+                  {t('upload.reviewExtractedFields')}
                 </h2>
                 <ExtractionForm
                   billFields={billFields}
@@ -177,10 +179,10 @@ export default function UploadPage() {
                   {step === 'saving' ? (
                     <>
                       <LoadingSpinner size="sm" />
-                      Saving...
+                      {t('common.saving')}
                     </>
                   ) : (
-                    'Save Record'
+                    t('upload.saveRecord')
                   )}
                 </button>
               </div>
@@ -210,28 +212,30 @@ export default function UploadPage() {
 
 /** Modal shown when a duplicate composite key is detected. */
 function DuplicateModal({ existingRecord, onViewExisting, onSaveAnyway, onCancel }) {
+  const { t } = useTranslation();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 flex-shrink-0 text-amber-500" />
-          <h2 className="text-lg font-semibold text-slate-900">Duplicate Detected</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600">
-          A record with the same trader name, invoice number, and bill date already exists:
+          {t('duplicate.message')}
         </p>
         <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
           <p>
-            <span className="font-medium">Trader:</span> {existingRecord.trader_name}
+            <span className="font-medium">{t('duplicate.trader')}</span> {existingRecord.trader_name}
           </p>
           <p>
-            <span className="font-medium">Invoice:</span> {existingRecord.invoice_number}
+            <span className="font-medium">{t('duplicate.invoice')}</span> {existingRecord.invoice_number}
           </p>
           <p>
-            <span className="font-medium">Date:</span> {existingRecord.bill_date}
+            <span className="font-medium">{t('duplicate.date')}</span> {existingRecord.bill_date}
           </p>
           <p>
-            <span className="font-medium">Amount:</span> ₹{existingRecord.bill_amount}
+            <span className="font-medium">{t('duplicate.amount')}</span> ₹{existingRecord.bill_amount}
           </p>
         </div>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -240,21 +244,21 @@ function DuplicateModal({ existingRecord, onViewExisting, onSaveAnyway, onCancel
             onClick={onCancel}
             className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
             onClick={onViewExisting}
             className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
           >
-            View Existing
+            {t('duplicate.viewExisting')}
           </button>
           <button
             type="button"
             onClick={onSaveAnyway}
             className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
           >
-            Save Anyway
+            {t('duplicate.saveAnyway')}
           </button>
         </div>
       </div>

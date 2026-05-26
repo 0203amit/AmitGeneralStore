@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   PieChart,
   Pie,
@@ -40,6 +41,8 @@ const PAYMENT_MODE_COLORS = {
  * @param {{ records: Array<Object> }} props - Active records from Sheet
  */
 export default function PaymentModeChart({ records }) {
+  const { t } = useTranslation();
+
   const { modeData, traderData } = useMemo(() => {
     // Payment mode distribution (count by mode)
     const modeCounts = {};
@@ -79,7 +82,7 @@ export default function PaymentModeChart({ records }) {
       {/* Payment Mode Distribution */}
       <div className="rounded-lg border border-slate-200 bg-white p-5">
         <h3 className="mb-4 text-sm font-semibold text-slate-700">
-          Payment Mode Distribution
+          {t('dashboard.paymentModeDistribution')}
         </h3>
         {modeData.length > 0 ? (
           <ResponsiveContainer width="100%" height={260}>
@@ -101,13 +104,13 @@ export default function PaymentModeChart({ records }) {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value) => [`${value} records`, 'Count']}
+                formatter={(value) => [`${value} ${t('dashboard.records')}`, t('dashboard.count')]}
               />
             </PieChart>
           </ResponsiveContainer>
         ) : (
           <p className="py-10 text-center text-sm text-slate-400">
-            No payment data
+            {t('dashboard.noPaymentData')}
           </p>
         )}
       </div>
@@ -115,7 +118,7 @@ export default function PaymentModeChart({ records }) {
       {/* Top 5 Traders by Spend */}
       <div className="rounded-lg border border-slate-200 bg-white p-5">
         <h3 className="mb-4 text-sm font-semibold text-slate-700">
-          Top 5 Traders by Spend
+          {t('dashboard.topTradersBySpend')}
         </h3>
         {traderData.length > 0 ? (
           <ResponsiveContainer width="100%" height={260}>
@@ -126,7 +129,7 @@ export default function PaymentModeChart({ records }) {
             >
               <XAxis
                 type="number"
-                tickFormatter={(v) => `₹${formatCurrency(v)}`}
+                tickFormatter={(v) => `\u20B9${formatCurrency(v)}`}
                 tick={{ fontSize: 11 }}
               />
               <YAxis
@@ -136,14 +139,14 @@ export default function PaymentModeChart({ records }) {
                 tick={{ fontSize: 12 }}
               />
               <Tooltip
-                formatter={(value) => [`₹${formatCurrency(value)}`, 'Total Spend']}
+                formatter={(value) => [`\u20B9${formatCurrency(value)}`, t('dashboard.totalSpend')]}
               />
               <Bar dataKey="total" fill="#3C3489" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
           <p className="py-10 text-center text-sm text-slate-400">
-            No trader data
+            {t('dashboard.noTraderData')}
           </p>
         )}
       </div>

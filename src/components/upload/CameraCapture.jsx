@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Camera } from 'lucide-react';
 
 /**
@@ -16,8 +17,9 @@ export default function CameraCapture({
   capture = 'environment',
   onFileSelect,
   disabled = false,
-  label = 'Take Photo',
+  label,
 }) {
+  const { t } = useTranslation();
   const inputRef = useRef(null);
 
   const handleChange = (e) => {
@@ -46,7 +48,7 @@ export default function CameraCapture({
         className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-600 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Camera className="h-4 w-4" />
-        {label}
+        {label || t('upload.takePhoto')}
       </button>
     </>
   );

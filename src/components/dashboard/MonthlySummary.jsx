@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { IndianRupee, TrendingDown, FileText } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { parseDate, formatCurrency } from '../../utils/dateHelpers';
@@ -11,6 +12,8 @@ import { parseDate, formatCurrency } from '../../utils/dateHelpers';
  * @param {{ records: Array<Object> }} props - Active records from Sheet
  */
 export default function MonthlySummary({ records }) {
+  const { t } = useTranslation();
+
   const { spentThisMonth, spentLastMonth, createdThisMonth } = useMemo(() => {
     const now = new Date();
     const thisMonthStart = startOfMonth(now);
@@ -54,23 +57,26 @@ export default function MonthlySummary({ records }) {
     };
   }, [records]);
 
+  const thisMonthYear = format(new Date(), 'MMM yyyy');
+  const lastMonthYear = format(subMonths(new Date(), 1), 'MMM yyyy');
+
   const cards = [
     {
-      label: `Spent this month (${format(new Date(), 'MMM yyyy')})`,
-      value: `₹${formatCurrency(spentThisMonth)}`,
+      label: t('dashboard.spentThisMonth', { month: thisMonthYear }),
+      value: `\u20B9${formatCurrency(spentThisMonth)}`,
       icon: IndianRupee,
       color: 'text-brand-primary',
       bg: 'bg-brand-primary/10',
     },
     {
-      label: `Spent last month (${format(subMonths(new Date(), 1), 'MMM yyyy')})`,
-      value: `₹${formatCurrency(spentLastMonth)}`,
+      label: t('dashboard.spentLastMonth', { month: lastMonthYear }),
+      value: `\u20B9${formatCurrency(spentLastMonth)}`,
       icon: TrendingDown,
       color: 'text-brand-accent',
       bg: 'bg-brand-accent/10',
     },
     {
-      label: 'Records this month',
+      label: t('dashboard.recordsThisMonth'),
       value: String(createdThisMonth),
       icon: FileText,
       color: 'text-brand-green',

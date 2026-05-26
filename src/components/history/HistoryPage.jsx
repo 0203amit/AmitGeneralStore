@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { saveAs } from 'file-saver';
 import { format } from 'date-fns';
 import { FileDown, Download, X } from 'lucide-react';
@@ -65,6 +66,7 @@ function buildUrlParams(searchQuery, filters, sortBy, sortDir, page, pageSize) {
 }
 
 export default function HistoryPage() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addToast } = useToast();
   const [selectedIds, setSelectedIds] = useState(new Set());
@@ -73,7 +75,7 @@ export default function HistoryPage() {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [showBulkExportConfirm, setShowBulkExportConfirm] = useState(false);
 
-  document.title = buildPageTitle('history');
+  document.title = buildPageTitle(t('navbar.history'));
 
   // Initialize hook with URL params
   const initialFilters = parseUrlFilters(searchParams);
@@ -172,11 +174,11 @@ export default function HistoryPage() {
       const blob = await generateBulkProofPacketPDF(selectedRecords);
       const filename = `bulk_proof_${selectedRecords.length}_records_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       saveAs(blob, filename);
-      addToast({ type: 'success', message: `Proof packet for ${selectedRecords.length} record${selectedRecords.length !== 1 ? 's' : ''} downloaded` });
+      addToast({ type: 'success', message: t('history.proofDownloaded', { count: selectedRecords.length }) });
       setSelectedIds(new Set());
     } catch (err) {
       console.error('Bulk proof generation failed:', err);
-      addToast({ type: 'error', message: 'Failed to generate bulk proof packet' });
+      addToast({ type: 'error', message: t('history.proofFailed') });
     } finally {
       setBulkGenerating(false);
     }
@@ -193,11 +195,11 @@ export default function HistoryPage() {
       saveAs(blob, buildCsvFilename());
       addToast({
         type: 'success',
-        message: `Exported ${exportRecords.length} record${exportRecords.length !== 1 ? 's' : ''} to CSV`,
+        message: t('history.csvExported', { count: exportRecords.length }),
       });
     } catch (err) {
       console.error('CSV export failed:', err);
-      addToast({ type: 'error', message: 'Failed to export CSV' });
+      addToast({ type: 'error', message: t('history.csvFailed') });
     } finally {
       setCsvExporting(false);
     }
@@ -220,7 +222,7 @@ export default function HistoryPage() {
             onClick={refreshRecords}
             className="mt-3 text-sm font-medium text-brand-primary hover:underline"
           >
-            Try again
+            {t('common.tryAgain')}
           </button>
         </div>
       </div>
@@ -231,9 +233,9 @@ export default function HistoryPage() {
     <div className="p-4 sm:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">History</h1>
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{t('history.title')}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {totalFiltered} record{totalFiltered !== 1 ? 's' : ''} found
+            {t('history.recordsFound', { count: totalFiltered })}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -244,7 +246,7 @@ export default function HistoryPage() {
               onChange={(e) => setIncludeArchived(e.target.checked)}
               className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
             />
-            Include archived
+            {t('history.includeArchived')}
           </label>
           <button
             onClick={handleExportCsv}
@@ -254,12 +256,12 @@ export default function HistoryPage() {
             {csvExporting ? (
               <>
                 <LoadingSpinner size="sm" />
-                Exporting…
+                {t('history.exporting')}
               </>
             ) : (
               <>
                 <Download className="h-4 w-4" />
-                Export CSV
+                {t('history.exportCsv')}
               </>
             )}
           </button>
@@ -269,7 +271,7 @@ export default function HistoryPage() {
       {selectedIds.size > 0 && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-brand-primary/20 bg-brand-primary/5 px-4 py-3">
           <p className="text-sm font-medium text-brand-primary">
-            {selectedIds.size} record{selectedIds.size !== 1 ? 's' : ''} selected
+            {t('history.selectedRecords', { count: selectedIds.size })}
           </p>
           <div className="flex items-center gap-3">
             <button
@@ -280,12 +282,12 @@ export default function HistoryPage() {
               {bulkGenerating ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Generating…
+                  {t('common.generating')}
                 </>
               ) : (
                 <>
                   <FileDown className="h-4 w-4" />
-                  Export selected as proof
+                  {t('history.exportSelectedAsProof')}
                 </>
               )}
             </button>
@@ -294,7 +296,7 @@ export default function HistoryPage() {
               className="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"
             >
               <X className="h-3.5 w-3.5" />
-              Clear
+              {t('common.clear')}
             </button>
           </div>
         </div>
@@ -328,9 +330,9 @@ export default function HistoryPage() {
 
       {showBulkExportConfirm && (
         <ConfirmDialog
-          title="Export proof packets?"
-          message={`Generate a combined proof PDF for ${selectedIds.size} selected record${selectedIds.size !== 1 ? 's' : ''}? This may take a moment.`}
-          confirmLabel="Export"
+          title={t('history.exportProofConfirmTitle')}
+          message={t('history.exportProofConfirmMessage', { count: selectedIds.size })}
+          confirmLabel={t('common.export')}
           onConfirm={() => {
             setShowBulkExportConfirm(false);
             handleBulkExportProof();

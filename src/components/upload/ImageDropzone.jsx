@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, RefreshCw } from 'lucide-react';
 import { validateImageFile } from '../../utils/imageProcessor';
@@ -31,6 +32,7 @@ export default function ImageDropzone({
   disabled = false,
   error = null,
 }) {
+  const { t } = useTranslation();
   const replaceInputRef = useRef(null);
 
   const onDrop = useCallback(
@@ -89,7 +91,7 @@ export default function ImageDropzone({
             disabled={disabled}
             className="flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
           >
-            <RefreshCw className="h-3.5 w-3.5" /> Replace
+            <RefreshCw className="h-3.5 w-3.5" /> {t('upload.replace')}
           </button>
           <button
             type="button"
@@ -97,7 +99,7 @@ export default function ImageDropzone({
             disabled={disabled}
             className="flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
           >
-            <X className="h-3.5 w-3.5" /> Remove
+            <X className="h-3.5 w-3.5" /> {t('upload.remove')}
           </button>
         </div>
       </div>
@@ -115,7 +117,7 @@ export default function ImageDropzone({
           capture={captureMode}
           onFileSelect={onFileSelect}
           disabled={disabled}
-          label="Take Photo"
+          label={t('upload.takePhoto')}
         />
       )}
 
@@ -131,9 +133,9 @@ export default function ImageDropzone({
         <input {...getInputProps()} />
         <Upload className="mb-2 h-8 w-8 text-slate-400" />
         <p className="text-sm text-slate-500">
-          {isDragActive ? 'Drop image here' : 'Drag & drop or tap to browse'}
+          {isDragActive ? t('upload.dropImageHere') : t('upload.dragDropOrBrowse')}
         </p>
-        <p className="mt-1 text-xs text-slate-400">JPG, PNG up to 10 MB</p>
+        <p className="mt-1 text-xs text-slate-400">{t('upload.fileHint')}</p>
       </div>
 
       {error && <p className="text-xs text-red-600">{error}</p>}

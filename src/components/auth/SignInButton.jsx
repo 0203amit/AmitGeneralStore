@@ -1,5 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import useAuth from '../../hooks/useAuth';
-import { SIGN_IN_HEADLINE, SIGN_IN_SUBHEADLINE } from '../../config/branding';
+import { SIGN_IN_HEADLINE } from '../../config/branding';
 import AdminLoginForm from './AdminLoginForm';
 
 /**
@@ -7,6 +8,7 @@ import AdminLoginForm from './AdminLoginForm';
  * and optional admin login form (shown when Service Account is configured).
  */
 export default function SignInButton() {
+  const { t } = useTranslation();
   const { signIn, loading, isAdminLoginAvailable } = useAuth();
 
   return (
@@ -14,7 +16,7 @@ export default function SignInButton() {
       <h1 className="text-4xl font-bold text-brand-primary sm:text-5xl">
         {SIGN_IN_HEADLINE}
       </h1>
-      <p className="text-lg text-slate-600">{SIGN_IN_SUBHEADLINE}</p>
+      <p className="text-lg text-slate-600">{t('branding.signInSubheadline')}</p>
 
       <button
         onClick={signIn}
@@ -43,14 +45,14 @@ export default function SignInButton() {
             fill="#EA4335"
           />
         </svg>
-        {loading ? 'Loading...' : 'Sign in with Google'}
+        {loading ? t('common.loading') : t('auth.signInWithGoogle')}
       </button>
 
       {isAdminLoginAvailable && (
         <>
           <div className="flex w-full max-w-xs items-center gap-3">
             <div className="h-px flex-1 bg-slate-300" />
-            <span className="text-sm text-slate-400">or</span>
+            <span className="text-sm text-slate-400">{t('common.or')}</span>
             <div className="h-px flex-1 bg-slate-300" />
           </div>
 

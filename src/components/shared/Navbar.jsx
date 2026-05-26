@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard,
   Upload,
@@ -12,13 +13,14 @@ import {
 import useAuth from '../../hooks/useAuth';
 import { useToast } from './Toast';
 import ConfirmDialog from './ConfirmDialog';
-import { BUSINESS_NAME, BUSINESS_TAGLINE } from '../../config/branding';
+import LanguageSelector from './LanguageSelector';
+import { BUSINESS_NAME } from '../../config/branding';
 
 const NAV_LINKS = [
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/upload', label: 'Upload', icon: Upload },
-  { to: '/history', label: 'History', icon: History },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/dashboard', labelKey: 'navbar.dashboard', icon: LayoutDashboard },
+  { to: '/upload', labelKey: 'navbar.upload', icon: Upload },
+  { to: '/history', labelKey: 'navbar.history', icon: History },
+  { to: '/settings', labelKey: 'navbar.settings', icon: Settings },
 ];
 
 /**
@@ -28,6 +30,7 @@ const NAV_LINKS = [
 export default function Navbar() {
   const { user, signOut } = useAuth();
   const { addToast } = useToast();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
@@ -39,9 +42,9 @@ export default function Navbar() {
     setMenuOpen(false);
     try {
       await signOut();
-      addToast({ type: 'success', message: 'Signed out successfully' });
+      addToast({ type: 'success', message: t('auth.signedOutSuccess') });
     } catch {
-      addToast({ type: 'error', message: 'Sign-out failed' });
+      addToast({ type: 'error', message: t('auth.signOutFailed') });
     }
   }
 
@@ -64,12 +67,12 @@ export default function Navbar() {
           <span className="text-lg font-bold leading-tight text-brand-primary">
             {BUSINESS_NAME}
           </span>
-          <span className="text-xs text-slate-500">{BUSINESS_TAGLINE}</span>
+          <span className="text-xs text-slate-500">{t('branding.tagline')}</span>
         </div>
 
         {/* Desktop nav links */}
         <div className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map(({ to, label, icon: Icon }) => (
+          {NAV_LINKS.map(({ to, labelKey, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -82,13 +85,14 @@ export default function Navbar() {
               }
             >
               <Icon className="h-4 w-4" />
-              {label}
+              {t(labelKey)}
             </NavLink>
           ))}
         </div>
 
-        {/* User avatar + profile dropdown (desktop) */}
+        {/* Language selector + User avatar (desktop) */}
         <div className="hidden items-center gap-3 md:flex" ref={profileRef}>
+          <LanguageSelector />
           <button
             onClick={() => setProfileOpen((prev) => !prev)}
             className="flex items-center gap-2 rounded-full p-1 transition hover:bg-slate-100"
@@ -123,7 +127,7 @@ export default function Navbar() {
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-red-600"
               >
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {t('common.signOut')}
               </button>
             </div>
           )}
@@ -143,7 +147,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="border-t border-slate-200 bg-white px-4 pb-4 md:hidden">
           <div className="flex flex-col gap-1 pt-2">
-            {NAV_LINKS.map(({ to, label, icon: Icon }) => (
+            {NAV_LINKS.map(({ to, labelKey, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -157,9 +161,14 @@ export default function Navbar() {
                 }
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                {t(labelKey)}
               </NavLink>
             ))}
+          </div>
+
+          {/* Language selector (mobile) */}
+          <div className="mt-3 flex justify-center border-t border-slate-200 pt-3">
+            <LanguageSelector />
           </div>
 
           {/* Mobile user info + sign-out */}
@@ -192,16 +201,16 @@ export default function Navbar() {
               className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
             >
               <LogOut className="h-4 w-4" />
-              Sign out
+              {t('common.signOut')}
             </button>
           </div>
         </div>
       )}
       {showSignOutConfirm && (
         <ConfirmDialog
-          title="Sign out?"
-          message="You will need to sign in again to access your receipts."
-          confirmLabel="Sign out"
+          title={t('auth.signOutConfirmTitle')}
+          message={t('auth.signOutConfirmMessage')}
+          confirmLabel={t('common.signOut')}
           confirmClassName="bg-red-600 text-white hover:bg-red-700"
           onConfirm={handleSignOut}
           onCancel={() => setShowSignOutConfirm(false)}

@@ -58,11 +58,11 @@ export function parseDate(dateStr) {
  * "All Time" returns null bounds (no filter).
  */
 export const DATE_PRESETS = [
-  { label: 'This Month', value: 'this_month' },
-  { label: 'Last Month', value: 'last_month' },
-  { label: 'Last 3 Months', value: 'last_3_months' },
-  { label: 'This Year', value: 'this_year' },
-  { label: 'All Time', value: 'all_time' },
+  { labelKey: 'datePresets.thisMonth', value: 'this_month' },
+  { labelKey: 'datePresets.lastMonth', value: 'last_month' },
+  { labelKey: 'datePresets.last3Months', value: 'last_3_months' },
+  { labelKey: 'datePresets.thisYear', value: 'this_year' },
+  { labelKey: 'datePresets.allTime', value: 'all_time' },
 ];
 
 /**

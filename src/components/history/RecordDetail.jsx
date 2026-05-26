@@ -6,6 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   Download,
@@ -28,7 +29,9 @@ import { saveAs } from 'file-saver';
 import { getAllRecords, archiveRecord, restoreRecord } from '../../services/sheetsService';
 import { getImageBlob } from '../../services/driveService';
 import { generateProofPacketPDF, generatePlainTextSummary, editRecord } from '../../services/recordService';
-import { formatDisplayDate, formatTimestamp, formatCurrency, toDateInputDisplay, fromDateInputDisplay } from '../../utils/dateHelpers';
+import DatePicker from 'react-datepicker';
+import { parse, format } from 'date-fns';
+import { formatDisplayDate, formatTimestamp, formatCurrency } from '../../utils/dateHelpers';
 import { buildPageTitle } from '../../config/branding';
 import { useToast } from '../shared/Toast';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -55,36 +58,8 @@ const PAYMENT_MODE_COLORS = {
   net_banking: 'bg-emerald-100 text-emerald-700',
 };
 
-/** Editable bill fields in edit mode. */
-const BILL_EDIT_FIELDS = [
-  { key: 'trader_name', label: 'Trader Name', type: 'text' },
-  { key: 'trader_address', label: 'Trader Address', type: 'text' },
-  { key: 'invoice_number', label: 'Invoice Number', type: 'text' },
-  { key: 'bill_date', label: 'Bill Date', type: 'date' },
-  { key: 'bill_amount', label: 'Bill Amount', type: 'number' },
-  { key: 'currency', label: 'Currency', type: 'text' },
-];
-
-/** Editable payment fields in edit mode (dynamic based on payment mode). */
-function getPaymentEditFields(paymentMode) {
-  const fields = [];
-  if (paymentMode === 'gpay') {
-    fields.push({ key: 'upi_transaction_id', label: 'UPI Transaction ID', type: 'text' });
-    fields.push({ key: 'google_transaction_id', label: 'Google Transaction ID', type: 'text' });
-  } else {
-    fields.push({ key: 'utr_number', label: 'UTR Number', type: 'text' });
-  }
-  fields.push(
-    { key: 'payment_date', label: 'Payment Date', type: 'date' },
-    { key: 'payment_mode', label: 'Payment Mode', type: 'select' },
-    { key: 'paid_amount', label: 'Amount Paid', type: 'number' },
-    { key: 'payer_name', label: 'Payer', type: 'text' },
-    { key: 'payee_name', label: 'Payee', type: 'text' },
-  );
-  return fields;
-}
-
 export default function RecordDetail() {
+  const { t } = useTranslation();
   const { recordId } = useParams();
   const navigate = useNavigate();
   const { addToast } = useToast();
@@ -108,7 +83,36 @@ export default function RecordDetail() {
   const [archiveReason, setArchiveReason] = useState('');
   const [archiving, setArchiving] = useState(false);
 
-  document.title = buildPageTitle('detail');
+  document.title = buildPageTitle(t('navbar.history'));
+
+  /** Editable bill fields in edit mode. */
+  const BILL_EDIT_FIELDS = [
+    { key: 'trader_name', label: t('detail.traderName'), type: 'text' },
+    { key: 'trader_address', label: t('detail.traderAddress'), type: 'text' },
+    { key: 'invoice_number', label: t('detail.invoiceNumber'), type: 'text' },
+    { key: 'bill_date', label: t('detail.billDate'), type: 'date' },
+    { key: 'bill_amount', label: t('detail.billAmount'), type: 'number' },
+    { key: 'currency', label: t('detail.currency'), type: 'text' },
+  ];
+
+  /** Editable payment fields in edit mode (dynamic based on payment mode). */
+  function getPaymentEditFields(paymentMode) {
+    const fields = [];
+    if (paymentMode === 'gpay') {
+      fields.push({ key: 'upi_transaction_id', label: t('detail.upiTransactionId'), type: 'text' });
+      fields.push({ key: 'google_transaction_id', label: t('detail.googleTransactionId'), type: 'text' });
+    } else {
+      fields.push({ key: 'utr_number', label: t('detail.utrNumber'), type: 'text' });
+    }
+    fields.push(
+      { key: 'payment_date', label: t('detail.paymentDate'), type: 'date' },
+      { key: 'payment_mode', label: t('extraction.paymentMode'), type: 'select' },
+      { key: 'paid_amount', label: t('detail.amountPaid'), type: 'number' },
+      { key: 'payer_name', label: t('detail.payer'), type: 'text' },
+      { key: 'payee_name', label: t('detail.payee'), type: 'text' },
+    );
+    return fields;
+  }
 
   // Fetch record
   useEffect(() => {
@@ -119,18 +123,18 @@ export default function RecordDetail() {
         const records = await getAllRecords();
         const found = records.find((r) => r.record_id === recordId);
         if (!found) {
-          setError('Record not found');
+          setError(t('detail.recordNotFound'));
         } else {
           setRecord(found);
         }
       } catch (err) {
-        setError(err.message || 'Failed to load record');
+        setError(err.message || t('detail.failedToLoad'));
       } finally {
         setLoading(false);
       }
     }
     fetchRecord();
-  }, [recordId]);
+  }, [recordId, t]);
 
   // Fetch images from Drive
   useEffect(() => {
@@ -175,10 +179,10 @@ export default function RecordDetail() {
       const traderSlug = (record.trader_name || 'unknown').replace(/\s+/g, '_');
       const filename = `proof_${traderSlug}_${record.invoice_number || record.record_id}.pdf`;
       saveAs(blob, filename);
-      addToast({ type: 'success', message: 'Proof packet downloaded' });
+      addToast({ type: 'success', message: t('detail.proofDownloaded') });
     } catch (err) {
       console.error('Proof packet generation failed:', err);
-      addToast({ type: 'error', message: 'Failed to generate proof packet' });
+      addToast({ type: 'error', message: t('detail.proofFailed') });
     } finally {
       setPdfGenerating(false);
     }
@@ -192,7 +196,7 @@ export default function RecordDetail() {
         blob = await generateProofPacketPDF(record);
         setGeneratedPdfBlob(blob);
       } catch {
-        addToast({ type: 'error', message: 'Failed to generate proof packet' });
+        addToast({ type: 'error', message: t('detail.proofFailed') });
         setPdfGenerating(false);
         return;
       }
@@ -208,7 +212,7 @@ export default function RecordDetail() {
         });
       } catch (err) {
         if (err.name !== 'AbortError') {
-          addToast({ type: 'error', message: 'Sharing failed' });
+          addToast({ type: 'error', message: t('detail.sharingFailed') });
         }
       }
     } else {
@@ -229,9 +233,9 @@ export default function RecordDetail() {
     const text = generatePlainTextSummary(record);
     try {
       await navigator.clipboard.writeText(text);
-      addToast({ type: 'success', message: 'Proof summary copied to clipboard' });
+      addToast({ type: 'success', message: t('detail.summaryCopieds') });
     } catch {
-      addToast({ type: 'error', message: 'Failed to copy to clipboard' });
+      addToast({ type: 'error', message: t('detail.copyFailed') });
     }
   }
 
@@ -279,7 +283,7 @@ export default function RecordDetail() {
     }
 
     if (Object.keys(changes).length === 0) {
-      addToast({ type: 'info', message: 'No changes to save' });
+      addToast({ type: 'info', message: t('detail.noChangesToSave') });
       setEditMode(false);
       return;
     }
@@ -291,12 +295,12 @@ export default function RecordDetail() {
       setEditMode(false);
       setEditFields({});
       setGeneratedPdfBlob(null); // Invalidate cached PDF
-      addToast({ type: 'success', message: 'Record updated successfully' });
+      addToast({ type: 'success', message: t('detail.recordUpdated') });
     } catch (err) {
       if (err.code === 'DUPLICATE_DETECTED') {
         setDuplicateRecord(err.existingRecord);
       } else {
-        addToast({ type: 'error', message: err.message || 'Failed to update record' });
+        addToast({ type: 'error', message: err.message || t('detail.updateFailed') });
       }
     } finally {
       setSaving(false);
@@ -313,9 +317,9 @@ export default function RecordDetail() {
       setShowArchiveDialog(false);
       setArchiveReason('');
       setGeneratedPdfBlob(null);
-      addToast({ type: 'success', message: 'Record archived successfully' });
+      addToast({ type: 'success', message: t('detail.recordArchived') });
     } catch (err) {
-      addToast({ type: 'error', message: err.message || 'Failed to archive record' });
+      addToast({ type: 'error', message: err.message || t('detail.archiveFailed') });
     } finally {
       setArchiving(false);
     }
@@ -327,9 +331,9 @@ export default function RecordDetail() {
       const updated = await restoreRecord(record.record_id);
       setRecord(updated);
       setGeneratedPdfBlob(null);
-      addToast({ type: 'success', message: 'Record restored successfully' });
+      addToast({ type: 'success', message: t('detail.recordRestored') });
     } catch (err) {
-      addToast({ type: 'error', message: err.message || 'Failed to restore record' });
+      addToast({ type: 'error', message: err.message || t('detail.restoreFailed') });
     } finally {
       setArchiving(false);
     }
@@ -353,7 +357,7 @@ export default function RecordDetail() {
           className="mb-4 flex items-center gap-2 text-sm text-slate-600 hover:text-brand-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to History
+          {t('detail.backToHistory')}
         </button>
         <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
           <p className="text-sm text-red-700">{error}</p>
@@ -361,7 +365,7 @@ export default function RecordDetail() {
             to="/history"
             className="mt-3 inline-block text-sm font-medium text-brand-primary hover:underline"
           >
-            Return to History
+            {t('detail.returnToHistory')}
           </Link>
         </div>
       </div>
@@ -381,13 +385,13 @@ export default function RecordDetail() {
           className="flex items-center gap-2 text-sm text-slate-600 hover:text-brand-primary"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to History
+          {t('detail.backToHistory')}
         </button>
         <div className="flex flex-wrap items-center gap-2">
           {needsReview && (
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Needs review
+              {t('extraction.needsReview')}
             </span>
           )}
           {!editMode && record.status === 'active' && (
@@ -397,7 +401,7 @@ export default function RecordDetail() {
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 <Pencil className="h-3.5 w-3.5" />
-                Edit
+                {t('common.edit')}
               </button>
               <button
                 onClick={() => setShowArchiveDialog(true)}
@@ -405,7 +409,7 @@ export default function RecordDetail() {
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 <Archive className="h-3.5 w-3.5" />
-                Archive
+                {t('common.archive')}
               </button>
             </>
           )}
@@ -418,12 +422,12 @@ export default function RecordDetail() {
               {archiving ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Restoring…
+                  {t('common.restoring')}
                 </>
               ) : (
                 <>
                   <RotateCcw className="h-3.5 w-3.5" />
-                  Restore
+                  {t('common.restore')}
                 </>
               )}
             </button>
@@ -434,17 +438,20 @@ export default function RecordDetail() {
       {/* Title */}
       <div className="mb-6">
         <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
-          {editMode ? (editFields.trader_name || 'Unknown Trader') : (record.trader_name || 'Unknown Trader')}
+          {editMode ? (editFields.trader_name || t('history.unknownTrader')) : (record.trader_name || t('history.unknownTrader'))}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Invoice {(editMode ? editFields.invoice_number : record.invoice_number) || '—'} · {formatDisplayDate(editMode ? editFields.bill_date : record.bill_date)}
+          {t('detail.invoiceSubtitle', {
+            number: (editMode ? editFields.invoice_number : record.invoice_number) || '\u2014',
+            date: formatDisplayDate(editMode ? editFields.bill_date : record.bill_date),
+          })}
         </p>
       </div>
 
       {/* Edit mode action bar */}
       {editMode && (
         <div className="mb-6 flex flex-wrap items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
-          <span className="text-sm font-medium text-blue-700">Editing record</span>
+          <span className="text-sm font-medium text-blue-700">{t('detail.editingRecord')}</span>
           <div className="ml-auto flex flex-wrap gap-2">
             <button
               onClick={handleCancelEdit}
@@ -452,7 +459,7 @@ export default function RecordDetail() {
               className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" />
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleSaveEdit}
@@ -462,12 +469,12 @@ export default function RecordDetail() {
               {saving ? (
                 <>
                   <LoadingSpinner size="sm" />
-                  Saving…
+                  {t('common.saving')}
                 </>
               ) : (
                 <>
                   <Save className="h-3.5 w-3.5" />
-                  Save Changes
+                  {t('detail.saveChanges')}
                 </>
               )}
             </button>
@@ -481,7 +488,7 @@ export default function RecordDetail() {
         <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <FileText className="h-4 w-4" />
-            Bill Details
+            {t('detail.billDetails')}
           </h2>
           <dl className="space-y-3">
             {editMode ? (
@@ -497,7 +504,7 @@ export default function RecordDetail() {
                 ))}
                 {record.bill_ocr_confidence && (
                   <DetailRow
-                    label="OCR Confidence"
+                    label={t('detail.ocrConfidence')}
                     value={`${(parseFloat(record.bill_ocr_confidence) * 100).toFixed(0)}%`}
                     warn={parseFloat(record.bill_ocr_confidence) < 0.7}
                     readOnly
@@ -506,18 +513,18 @@ export default function RecordDetail() {
               </>
             ) : (
               <>
-                <DetailRow label="Trader Name" value={record.trader_name} />
-                <DetailRow label="Trader Address" value={record.trader_address} />
-                <DetailRow label="Invoice Number" value={record.invoice_number} />
-                <DetailRow label="Bill Date" value={formatDisplayDate(record.bill_date)} />
+                <DetailRow label={t('detail.traderName')} value={record.trader_name} />
+                <DetailRow label={t('detail.traderAddress')} value={record.trader_address} />
+                <DetailRow label={t('detail.invoiceNumber')} value={record.invoice_number} />
+                <DetailRow label={t('detail.billDate')} value={formatDisplayDate(record.bill_date)} />
                 <DetailRow
-                  label="Bill Amount"
-                  value={record.bill_amount ? `₹${formatCurrency(record.bill_amount)}` : ''}
+                  label={t('detail.billAmount')}
+                  value={record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : ''}
                 />
-                <DetailRow label="Currency" value={record.currency || 'INR'} />
+                <DetailRow label={t('detail.currency')} value={record.currency || 'INR'} />
                 {record.bill_ocr_confidence && (
                   <DetailRow
-                    label="OCR Confidence"
+                    label={t('detail.ocrConfidence')}
                     value={`${(parseFloat(record.bill_ocr_confidence) * 100).toFixed(0)}%`}
                     warn={parseFloat(record.bill_ocr_confidence) < 0.7}
                   />
@@ -531,7 +538,7 @@ export default function RecordDetail() {
         <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <CreditCard className="h-4 w-4" />
-            Payment Details
+            {t('detail.paymentDetails')}
           </h2>
           <dl className="space-y-3">
             {editMode ? (
@@ -558,7 +565,7 @@ export default function RecordDetail() {
                 )}
                 {record.payment_ocr_confidence && (
                   <DetailRow
-                    label="OCR Confidence"
+                    label={t('detail.ocrConfidence')}
                     value={`${(parseFloat(record.payment_ocr_confidence) * 100).toFixed(0)}%`}
                     warn={parseFloat(record.payment_ocr_confidence) < 0.7}
                     readOnly
@@ -569,15 +576,15 @@ export default function RecordDetail() {
               <>
                 {record.payment_mode === 'gpay' ? (
                   <>
-                    <DetailRow label="UPI Transaction ID" value={record.upi_transaction_id} />
-                    <DetailRow label="Google Transaction ID" value={record.google_transaction_id} />
+                    <DetailRow label={t('detail.upiTransactionId')} value={record.upi_transaction_id} />
+                    <DetailRow label={t('detail.googleTransactionId')} value={record.google_transaction_id} />
                   </>
                 ) : (
-                  <DetailRow label="UTR Number" value={record.utr_number} />
+                  <DetailRow label={t('detail.utrNumber')} value={record.utr_number} />
                 )}
-                <DetailRow label="Payment Date" value={formatDisplayDate(record.payment_date)} />
+                <DetailRow label={t('detail.paymentDate')} value={formatDisplayDate(record.payment_date)} />
                 <DetailRow
-                  label="Payment Mode"
+                  label={t('extraction.paymentMode')}
                   value={
                     <span
                       className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -589,14 +596,14 @@ export default function RecordDetail() {
                   }
                 />
                 <DetailRow
-                  label="Amount Paid"
-                  value={record.paid_amount ? `₹${formatCurrency(record.paid_amount)}` : ''}
+                  label={t('detail.amountPaid')}
+                  value={record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : ''}
                 />
-                <DetailRow label="Payer" value={record.payer_name} />
-                <DetailRow label="Payee" value={record.payee_name} />
+                <DetailRow label={t('detail.payer')} value={record.payer_name} />
+                <DetailRow label={t('detail.payee')} value={record.payee_name} />
                 {record.payment_ocr_confidence && (
                   <DetailRow
-                    label="OCR Confidence"
+                    label={t('detail.ocrConfidence')}
                     value={`${(parseFloat(record.payment_ocr_confidence) * 100).toFixed(0)}%`}
                     warn={parseFloat(record.payment_ocr_confidence) < 0.7}
                   />
@@ -610,7 +617,7 @@ export default function RecordDetail() {
         <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6 lg:col-span-2">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <FileText className="h-4 w-4" />
-            Original Images
+            {t('detail.originalImages')}
           </h2>
           {imagesLoading ? (
             <LoadingSpinner size="md" className="py-8" />
@@ -619,7 +626,7 @@ export default function RecordDetail() {
               {/* Bill image */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-medium text-slate-500">Bill Image</p>
+                  <p className="text-xs font-medium text-slate-500">{t('detail.billImage')}</p>
                   {billImageUrl && (
                     <button
                       onClick={() =>
@@ -631,7 +638,7 @@ export default function RecordDetail() {
                       className="flex items-center gap-1 text-xs text-brand-primary hover:underline"
                     >
                       <Download className="h-3 w-3" />
-                      Download
+                      {t('common.download')}
                     </button>
                   )}
                 </div>
@@ -643,7 +650,7 @@ export default function RecordDetail() {
                   />
                 ) : (
                   <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-                    <p className="text-xs text-slate-400">Image not available</p>
+                    <p className="text-xs text-slate-400">{t('detail.imageNotAvailable')}</p>
                   </div>
                 )}
               </div>
@@ -651,7 +658,7 @@ export default function RecordDetail() {
               {/* Payment image */}
               <div>
                 <div className="mb-2 flex items-center justify-between">
-                  <p className="text-xs font-medium text-slate-500">Payment Receipt</p>
+                  <p className="text-xs font-medium text-slate-500">{t('detail.paymentReceipt')}</p>
                   {paymentImageUrl && (
                     <button
                       onClick={() =>
@@ -663,7 +670,7 @@ export default function RecordDetail() {
                       className="flex items-center gap-1 text-xs text-brand-primary hover:underline"
                     >
                       <Download className="h-3 w-3" />
-                      Download
+                      {t('common.download')}
                     </button>
                   )}
                 </div>
@@ -675,7 +682,7 @@ export default function RecordDetail() {
                   />
                 ) : (
                   <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
-                    <p className="text-xs text-slate-400">Image not available</p>
+                    <p className="text-xs text-slate-400">{t('detail.imageNotAvailable')}</p>
                   </div>
                 )}
               </div>
@@ -688,31 +695,31 @@ export default function RecordDetail() {
           <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6 lg:col-span-2">
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
               <Hash className="h-4 w-4" />
-              Notes & Tags
+              {t('detail.notesAndTags')}
             </h2>
             <dl className="space-y-3">
               {editMode ? (
                 <>
                   <EditRow
-                    label="Notes"
+                    label={t('detail.notes')}
                     type="textarea"
                     value={editFields.notes}
                     onChange={(v) => handleEditField('notes', v)}
                   />
                   <EditRow
-                    label="Tags"
+                    label={t('detail.tags')}
                     type="text"
                     value={editFields.tags}
                     onChange={(v) => handleEditField('tags', v)}
-                    placeholder="Comma-separated tags"
+                    placeholder={t('detail.commaSeparatedTags')}
                   />
                 </>
               ) : (
                 <>
-                  {record.notes && <DetailRow label="Notes" value={record.notes} />}
+                  {record.notes && <DetailRow label={t('detail.notes')} value={record.notes} />}
                   {record.tags && (
                     <DetailRow
-                      label="Tags"
+                      label={t('detail.tags')}
                       value={
                         <div className="flex flex-wrap gap-1">
                           {record.tags.split(',').map((tag) => (
@@ -738,7 +745,7 @@ export default function RecordDetail() {
           <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6 lg:col-span-2">
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
               <FileDown className="h-4 w-4" />
-              Proof Packet
+              {t('detail.proofPacket')}
             </h2>
             <div className="flex flex-wrap gap-3">
               <button
@@ -749,12 +756,12 @@ export default function RecordDetail() {
                 {pdfGenerating ? (
                   <>
                     <LoadingSpinner size="sm" />
-                    Generating…
+                    {t('common.generating')}
                   </>
                 ) : (
                   <>
                     <FileDown className="h-4 w-4" />
-                    Download Proof PDF
+                    {t('detail.downloadProofPdf')}
                   </>
                 )}
               </button>
@@ -764,21 +771,21 @@ export default function RecordDetail() {
                 className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 <Share2 className="h-4 w-4" />
-                Share via WhatsApp
+                {t('detail.shareWhatsApp')}
               </button>
               <button
                 onClick={handleShareEmail}
                 className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 <Mail className="h-4 w-4" />
-                Share via Email
+                {t('detail.shareEmail')}
               </button>
               <button
                 onClick={handleCopyProofSummary}
                 className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
                 <Copy className="h-4 w-4" />
-                Copy Summary
+                {t('detail.copySummary')}
               </button>
             </div>
           </div>
@@ -788,39 +795,39 @@ export default function RecordDetail() {
         <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6 lg:col-span-2">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <Clock className="h-4 w-4" />
-            Audit Trail
+            {t('detail.auditTrail')}
           </h2>
           <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <DetailRow
-              label="Record ID"
+              label={t('detail.recordId')}
               value={
                 <span className="font-mono text-xs">{record.record_id}</span>
               }
             />
-            <DetailRow label="Created" value={formatTimestamp(record.created_at)} />
-            <DetailRow label="Last Updated" value={formatTimestamp(record.updated_at)} />
-            <DetailRow label="Status" value={
+            <DetailRow label={t('detail.created')} value={formatTimestamp(record.created_at)} />
+            <DetailRow label={t('detail.lastUpdated')} value={formatTimestamp(record.updated_at)} />
+            <DetailRow label={t('history.status')} value={
               <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                 record.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
               }`}>
-                {record.status}
+                {record.status === 'active' ? t('detail.active') : t('detail.archived')}
               </span>
             } />
             <DetailRow
-              label="Edit Count"
+              label={t('detail.editCount')}
               value={record.edit_count || '0'}
             />
             {record.last_edited_field && (
-              <DetailRow label="Last Edited Field" value={record.last_edited_field} />
+              <DetailRow label={t('detail.lastEditedField')} value={record.last_edited_field} />
             )}
             {record.last_edited_at && (
-              <DetailRow label="Last Edited At" value={formatTimestamp(record.last_edited_at)} />
+              <DetailRow label={t('detail.lastEditedAt')} value={formatTimestamp(record.last_edited_at)} />
             )}
             {record.archived_at && (
-              <DetailRow label="Archived At" value={formatTimestamp(record.archived_at)} />
+              <DetailRow label={t('detail.archivedAt')} value={formatTimestamp(record.archived_at)} />
             )}
             {record.archived_reason && (
-              <DetailRow label="Archive Reason" value={record.archived_reason} />
+              <DetailRow label={t('detail.archiveReason')} value={record.archived_reason} />
             )}
           </dl>
         </div>
@@ -860,7 +867,7 @@ function DetailRow({ label, value, warn = false, readOnly = false }) {
     <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
       <dt className="text-xs font-medium text-slate-500 sm:w-32 sm:flex-shrink-0">{label}</dt>
       <dd className={`text-sm ${warn ? 'font-medium text-amber-600' : 'text-slate-900'} ${readOnly ? 'italic text-slate-400' : ''}`}>
-        {value || <span className="text-slate-300">—</span>}
+        {value || <span className="text-slate-300">{'\u2014'}</span>}
       </dd>
     </div>
   );
@@ -868,9 +875,21 @@ function DetailRow({ label, value, warn = false, readOnly = false }) {
 
 /** Editable field row for edit mode. */
 function EditRow({ label, type, value, onChange, options, placeholder }) {
+  const { t } = useTranslation();
   const inputClass =
     'w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-900 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary';
   const isDate = type === 'date';
+
+  const dateValue = isDate && value
+    ? (() => {
+        try {
+          const d = parse(value, 'yyyy-MM-dd', new Date());
+          return isNaN(d.getTime()) ? null : d;
+        } catch {
+          return null;
+        }
+      })()
+    : null;
 
   return (
     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
@@ -896,12 +915,24 @@ function EditRow({ label, type, value, onChange, options, placeholder }) {
             placeholder={placeholder}
             className={inputClass + ' resize-y'}
           />
+        ) : isDate ? (
+          <DatePicker
+            selected={dateValue}
+            onChange={(date) => onChange(date ? format(date, 'yyyy-MM-dd') : '')}
+            dateFormat="dd/MM/yyyy"
+            placeholderText={t('extraction.datePlaceholder')}
+            className={inputClass}
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="select"
+            isClearable
+          />
         ) : (
           <input
-            type={isDate ? 'text' : type}
-            value={isDate ? toDateInputDisplay(value || '') : (value || '')}
-            onChange={(e) => onChange(isDate ? fromDateInputDisplay(e.target.value) : e.target.value)}
-            placeholder={isDate ? 'DD/MM/YYYY' : placeholder}
+            type={type}
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
             step={type === 'number' ? 'any' : undefined}
             className={inputClass}
           />
@@ -913,26 +944,26 @@ function EditRow({ label, type, value, onChange, options, placeholder }) {
 
 /** Confirmation dialog for archiving a record. */
 function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChange, archiving }) {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <Archive className="h-6 w-6 flex-shrink-0 text-slate-500" />
-          <h2 className="text-lg font-semibold text-slate-900">Archive Record</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t('archiveDialog.title')}</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600">
-          Archive this record? It will be hidden from the main view but never deleted.
-          You can restore it anytime from the Archive page.
+          {t('archiveDialog.message')}
         </p>
         <div className="mt-4">
           <label htmlFor="archive-reason" className="mb-1 block text-xs font-medium text-slate-500">
-            Reason (optional)
+            {t('archiveDialog.reasonLabel')}
           </label>
           <textarea
             id="archive-reason"
             value={archiveReason}
             onChange={(e) => onReasonChange(e.target.value)}
-            placeholder="Why are you archiving this record?"
+            placeholder={t('archiveDialog.reasonPlaceholder')}
             rows={2}
             className="w-full resize-y rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
           />
@@ -944,7 +975,7 @@ function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChan
             disabled={archiving}
             className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -955,10 +986,10 @@ function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChan
             {archiving ? (
               <>
                 <LoadingSpinner size="sm" />
-                Archiving…
+                {t('archiveDialog.archiving')}
               </>
             ) : (
-              'Archive'
+              t('common.archive')
             )}
           </button>
         </div>
@@ -969,29 +1000,29 @@ function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChan
 
 /** Modal shown when editing creates a composite key collision. */
 function DuplicateEditModal({ existingRecord, onViewExisting, onDismiss }) {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 flex-shrink-0 text-amber-500" />
-          <h2 className="text-lg font-semibold text-slate-900">Duplicate Detected</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600">
-          Another active record already has the same trader name, invoice number, and bill date.
-          Please change the conflicting fields before saving.
+          {t('duplicate.editMessage')}
         </p>
         <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
           <p>
-            <span className="font-medium">Trader:</span> {existingRecord.trader_name}
+            <span className="font-medium">{t('duplicate.trader')}</span> {existingRecord.trader_name}
           </p>
           <p>
-            <span className="font-medium">Invoice:</span> {existingRecord.invoice_number}
+            <span className="font-medium">{t('duplicate.invoice')}</span> {existingRecord.invoice_number}
           </p>
           <p>
-            <span className="font-medium">Date:</span> {existingRecord.bill_date}
+            <span className="font-medium">{t('duplicate.date')}</span> {existingRecord.bill_date}
           </p>
           <p>
-            <span className="font-medium">Amount:</span> ₹{existingRecord.bill_amount}
+            <span className="font-medium">{t('duplicate.amount')}</span> \u20B9{existingRecord.bill_amount}
           </p>
         </div>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -1000,14 +1031,14 @@ function DuplicateEditModal({ existingRecord, onViewExisting, onDismiss }) {
             onClick={onDismiss}
             className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
-            OK
+            {t('common.ok')}
           </button>
           <button
             type="button"
             onClick={onViewExisting}
             className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
           >
-            View Existing
+            {t('duplicate.viewExisting')}
           </button>
         </div>
       </div>
