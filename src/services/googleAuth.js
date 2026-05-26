@@ -181,6 +181,44 @@ export function attemptSilentRefresh(clientId) {
 }
 
 /**
+ * Trigger a Google OAuth token request.
+ * When silent=true, uses prompt:'none' to refresh without a popup
+ * (works if the user has an existing Google session in the browser).
+ * When silent=false, shows the consent popup (required for first-time auth).
+ * Does NOT call setAccessToken — the caller is responsible.
+ * @param {{ silent?: boolean }} options
+ * @returns {Promise<{access_token: string, expires_in: number, scope: string}>}
+ */
+export function requestOAuthToken({ silent = false } = {}) {
+  return new Promise((resolve, reject) => {
+    if (!window.google?.accounts?.oauth2) {
+      reject(new Error('Google Identity Services not loaded'));
+      return;
+    }
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      prompt: silent ? 'none' : 'consent',
+      callback: (response) => {
+        if (response.error) {
+          reject(new Error(response.error_description || response.error));
+          return;
+        }
+        resolve(response);
+      },
+      error_callback: (err) => {
+        reject(new Error(
+          err.type === 'popup_closed'
+            ? 'Google sign-in was cancelled.'
+            : err.message || 'OAuth failed'
+        ));
+      },
+    });
+    client.requestAccessToken();
+  });
+}
+
+/**
  * Return the full OAuth scopes string for sign-in requests.
  * @returns {string}
  */

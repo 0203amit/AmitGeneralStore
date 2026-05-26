@@ -11,6 +11,7 @@ import { AuthContext } from '../context/AuthContext';
  *   folderIds: {rootId: string, billsId: string, paymentsId: string}|null,
  *   spreadsheetId: string|null,
  *   error: string|null,
+ *   adminLoginPhase: 'verifying'|'google-signin'|'provisioning'|null,
  *   signIn: () => void,
  *   signOut: () => Promise<void>,
  *   isAuthenticated: boolean,

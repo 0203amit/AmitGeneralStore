@@ -56,21 +56,18 @@ export function AuthProvider({ children }) {
   const [folderIds, setFolderIds] = useState(null);
   const [spreadsheetId, setSpreadsheetId] = useState(null);
   const [error, setError] = useState(null);
+  const [adminLoginPhase, setAdminLoginPhase] = useState(null);
   const initRef = useRef(false);
 
-  /** Restore an SA session: get fresh token, provision, set user. */
+  /** Restore an admin session: silent OAuth for Drive access, then provision. */
   const restoreAdminSession = useCallback(async (adminUser) => {
     try {
       setLoading(true);
       setError(null);
 
-      const { access_token, expires_in } = await getServiceAccountAccessToken();
-
-      googleAuth.setTokenRefresher(async () => {
-        return getServiceAccountAccessToken();
-      });
-
-      googleAuth.setAccessToken(access_token, expires_in);
+      // Silent OAuth — works if Google session exists in browser
+      const tokenResponse = await googleAuth.requestOAuthToken({ silent: true });
+      googleAuth.setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
 
       setProvisioning(true);
       const [folders, sheetId] = await Promise.all([
@@ -201,24 +198,59 @@ export function AuthProvider({ children }) {
     login();
   }, [login]);
 
-  /** Admin sign-in: authenticate via Service Account, verify credentials from Sheet. */
+  /**
+   * Hybrid admin sign-in:
+   * 1. SA token → verify credentials from Sheet → clear SA
+   * 2. Silent OAuth (no popup) → fallback to consent popup (first time only)
+   * 3. Provision Drive folders and Sheet with OAuth token
+   */
   const adminSignIn = useCallback(async (username, password) => {
     try {
       setLoading(true);
       setError(null);
 
-      // 1. Get SA access token
-      const { access_token, expires_in } = await getServiceAccountAccessToken();
+      // Phase 1: Verify credentials using Service Account
+      setAdminLoginPhase('verifying');
+      const saToken = await getServiceAccountAccessToken();
+      googleAuth.setAccessToken(saToken.access_token, saToken.expires_in);
+      await ensureAppSheet(); // Need sheet access to verify credentials
+      const adminUser = await verifyAdminCredentials(username, password);
 
-      // 2. Set SA token refresher so auto-refresh uses JWT instead of OAuth
-      googleAuth.setTokenRefresher(async () => {
-        return getServiceAccountAccessToken();
-      });
+      // Clear SA token — we'll use OAuth for ongoing operations
+      googleAuth.clearAuth();
+      clearFolderCache();
+      clearSheetCache();
 
-      // 3. Set token in googleAuth (configures gapi.client too)
-      googleAuth.setAccessToken(access_token, expires_in);
+      // Phase 2: Get OAuth token (silent-first, popup fallback)
+      setAdminLoginPhase('google-signin');
+      let tokenResponse;
+      try {
+        tokenResponse = await googleAuth.requestOAuthToken({ silent: true });
+      } catch {
+        // Silent failed (first-time login or expired Google session) — show popup
+        tokenResponse = await googleAuth.requestOAuthToken({ silent: false });
+      }
 
-      // 4. Provision Drive folders and Sheet (finds existing shared resources)
+      // Verify required scopes were granted
+      const grantedScopes = tokenResponse.scope || '';
+      const hasDriveScope = grantedScopes.includes('drive.file') || grantedScopes.includes('drive');
+      const hasSheetsScope = grantedScopes.includes('spreadsheets');
+      if (!hasDriveScope || !hasSheetsScope) {
+        const missing = [];
+        if (!hasDriveScope) missing.push('Google Drive');
+        if (!hasSheetsScope) missing.push('Google Sheets');
+        throw new Error(
+          `Access to ${missing.join(' and ')} was not granted. ` +
+          'Please sign in again and allow all requested permissions.'
+        );
+      }
+
+      // Phase 3: Provision with OAuth token
+      setAdminLoginPhase('provisioning');
+      googleAuth.setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
+
+      const googleUserInfo = await googleAuth.fetchUserInfo(tokenResponse.access_token);
+
       setProvisioning(true);
       const [folders, sheetId] = await Promise.all([
         ensureAppFolder(),
@@ -226,27 +258,29 @@ export function AuthProvider({ children }) {
       ]);
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
-
-      // 5. Verify admin credentials from the admin_users sheet tab
-      const adminUser = await verifyAdminCredentials(username, password);
-      const userInfo = { name: adminUser.name, email: adminUser.email, picture: null };
-      setUser(userInfo);
+      setUser({
+        name: adminUser.name,
+        email: googleUserInfo.email,
+        picture: googleUserInfo.picture || null,
+      });
       setProvisioning(false);
 
-      // 6. Save session so page refresh doesn't require re-login
+      // Save session so page refresh can restore via silent OAuth
       saveAdminSession(adminUser);
     } catch (err) {
       console.error('Admin sign-in failed:', err);
-      // Extract message from gapi errors ({result: {error: {message}}}) or standard errors
       const msg =
         err?.result?.error?.message || err?.message || 'Admin sign-in failed';
       setError(msg);
       googleAuth.clearAuth();
+      clearFolderCache();
+      clearSheetCache();
       setUser(null);
       setFolderIds(null);
       setSpreadsheetId(null);
       setProvisioning(false);
     } finally {
+      setAdminLoginPhase(null);
       setLoading(false);
     }
   }, []);
@@ -269,6 +303,7 @@ export function AuthProvider({ children }) {
     folderIds,
     spreadsheetId,
     error,
+    adminLoginPhase,
     signIn,
     adminSignIn,
     signOut,

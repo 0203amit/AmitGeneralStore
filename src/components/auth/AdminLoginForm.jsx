@@ -6,7 +6,7 @@ import useAuth from '../../hooks/useAuth';
  * Uses Service Account authentication to access the shared Google Drive/Sheets.
  */
 export default function AdminLoginForm() {
-  const { adminSignIn, loading } = useAuth();
+  const { adminSignIn, loading, adminLoginPhase } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState(null);
@@ -74,8 +74,22 @@ export default function AdminLoginForm() {
         disabled={isDisabled}
         className="w-full rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? 'Signing in...' : 'Sign in as Admin'}
+        {adminLoginPhase === 'verifying'
+          ? 'Verifying credentials...'
+          : adminLoginPhase === 'google-signin'
+            ? 'Connecting to Google...'
+            : adminLoginPhase === 'provisioning'
+              ? 'Setting up storage...'
+              : submitting
+                ? 'Signing in...'
+                : 'Sign in as Admin'}
       </button>
+
+      {adminLoginPhase === 'google-signin' && (
+        <p className="text-xs text-slate-500 text-center">
+          A Google sign-in popup may appear for first-time setup.
+        </p>
+      )}
     </form>
   );
 }
