@@ -8,22 +8,22 @@ export const AuthContext = createContext(null);
 
 const ADMIN_SESSION_KEY = 'admin_session';
 
-/** Save admin session to sessionStorage (cleared when browser closes). */
+/** Save admin session to localStorage (persists across browser restarts). */
 function saveAdminSession(userInfo) {
   try {
-    sessionStorage.setItem(
+    localStorage.setItem(
       ADMIN_SESSION_KEY,
       JSON.stringify({ name: userInfo.name, email: userInfo.email, isAdmin: true })
     );
   } catch {
-    // sessionStorage may be unavailable in some contexts
+    // localStorage may be unavailable in some contexts
   }
 }
 
-/** Read admin session from sessionStorage, or null if none. */
+/** Read admin session from localStorage (persists across browser restarts), or null if none. */
 function getAdminSession() {
   try {
-    const stored = sessionStorage.getItem(ADMIN_SESSION_KEY);
+    const stored = localStorage.getItem(ADMIN_SESSION_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored);
     return parsed?.isAdmin ? parsed : null;
@@ -32,10 +32,10 @@ function getAdminSession() {
   }
 }
 
-/** Clear admin session from sessionStorage. */
+/** Clear admin session from localStorage. */
 function clearAdminSession() {
   try {
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    localStorage.removeItem(ADMIN_SESSION_KEY);
   } catch {
     // ignore
   }
