@@ -8,8 +8,8 @@ const SA_EMAIL = process.env.SA_CLIENT_EMAIL;
 const SA_PRIVATE_KEY = process.env.SA_PRIVATE_KEY;
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 
-/** Session JWT lifetime: 7 days. */
-const SESSION_EXPIRY_SECONDS = 7 * 24 * 3600;
+/** Session JWT lifetime: no expiry (null = never expires). */
+const SESSION_EXPIRY_SECONDS = null;
 
 /** Scopes for admin Drive + Sheets access. */
 const ADMIN_SCOPES = [
@@ -62,7 +62,8 @@ function getHmacSecret() {
 export function createSessionToken(claims) {
   const header = { alg: 'HS256', typ: 'JWT' };
   const now = Math.floor(Date.now() / 1000);
-  const payload = { ...claims, iat: now, exp: now + SESSION_EXPIRY_SECONDS };
+  const payload = { ...claims, iat: now };
+  if (SESSION_EXPIRY_SECONDS) payload.exp = now + SESSION_EXPIRY_SECONDS;
 
   const encodedHeader = base64url(JSON.stringify(header));
   const encodedPayload = base64url(JSON.stringify(payload));
