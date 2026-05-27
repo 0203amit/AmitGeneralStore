@@ -13,7 +13,7 @@ const SESSION_EXPIRY_SECONDS = null;
 
 /** Scopes for admin Drive + Sheets access. */
 const ADMIN_SCOPES = [
-  'https://www.googleapis.com/auth/drive.file',
+  'https://www.googleapis.com/auth/drive',
   'https://www.googleapis.com/auth/spreadsheets',
 ].join(' ');
 
