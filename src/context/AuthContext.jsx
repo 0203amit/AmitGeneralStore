@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
       setIsAdmin(true);
       setProvisioning(false);
     } catch (err) {
-      console.error('Admin session restore failed:', err);
+      console.warn('Admin session restore skipped (re-login required):', err.message);
       clearAdminSession();
       googleAuth.clearAuth();
       setUser(null);

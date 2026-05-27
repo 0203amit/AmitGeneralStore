@@ -195,10 +195,10 @@ export function requestOAuthToken({ silent = false } = {}) {
       reject(new Error('Google Identity Services not loaded'));
       return;
     }
+    const promptValue = silent ? 'none' : 'consent';
     const client = window.google.accounts.oauth2.initTokenClient({
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       scope: SCOPES,
-      prompt: silent ? 'none' : 'consent',
       callback: (response) => {
         if (response.error) {
           reject(new Error(response.error_description || response.error));
@@ -207,14 +207,17 @@ export function requestOAuthToken({ silent = false } = {}) {
         resolve(response);
       },
       error_callback: (err) => {
-        reject(new Error(
-          err.type === 'popup_closed'
-            ? 'Google sign-in was cancelled.'
-            : err.message || 'OAuth failed'
-        ));
+        if (silent) {
+          // Silent refresh failed — expected when no active Google session
+          reject(new Error('Silent token refresh failed — re-authentication required.'));
+        } else if (err.type === 'popup_closed') {
+          reject(new Error('Google sign-in was cancelled.'));
+        } else {
+          reject(new Error(err.message || 'OAuth failed'));
+        }
       },
     });
-    client.requestAccessToken();
+    client.requestAccessToken({ prompt: promptValue });
   });
 }
 
