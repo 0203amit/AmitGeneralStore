@@ -1,4 +1,8 @@
-import { verifySessionToken, getAdminAccessToken } from './_lib/sa-utils.js';
+import {
+  verifySessionToken,
+  getStoredRefreshToken,
+  refreshUserOAuthToken,
+} from './_lib/sa-utils.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,10 +18,19 @@ export default async function handler(req, res) {
 
   try {
     // Validate session JWT (checks signature + expiry)
-    verifySessionToken(sessionToken);
+    const session = verifySessionToken(sessionToken);
 
-    // Generate a fresh SA access token with drive.file + spreadsheets scopes
-    const { access_token, expires_in } = await getAdminAccessToken();
+    // Get stored refresh token for this user
+    const refreshToken = await getStoredRefreshToken(session.sub);
+    if (!refreshToken) {
+      throw Object.assign(
+        new Error('No refresh token stored. Please sign in again.'),
+        { status: 401 },
+      );
+    }
+
+    // Use refresh token to get a fresh user OAuth access token
+    const { access_token, expires_in } = await refreshUserOAuthToken(refreshToken);
 
     return res.status(200).json({ access_token, expires_in });
   } catch (err) {

@@ -76,12 +76,18 @@ export default function AdminLoginForm() {
       >
         {adminLoginPhase === 'verifying'
           ? t('auth.verifyingCredentials')
-          : adminLoginPhase === 'provisioning'
-            ? t('auth.settingUpStorage')
-            : submitting
-              ? t('auth.signingIn')
-              : t('auth.signInAsAdmin')}
+          : adminLoginPhase === 'google-signin'
+            ? t('auth.connectingGoogle')
+            : adminLoginPhase === 'provisioning'
+              ? t('auth.settingUpStorage')
+              : submitting
+                ? t('auth.signingIn')
+                : t('auth.signInAsAdmin')}
       </button>
+
+      {adminLoginPhase === 'google-signin' && (
+        <p className="text-xs text-slate-500 text-center">{t('auth.googleSignInPopupHint')}</p>
+      )}
     </form>
   );
 }

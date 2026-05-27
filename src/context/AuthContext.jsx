@@ -31,7 +31,7 @@ function getAdminSession() {
     const stored = localStorage.getItem(ADMIN_SESSION_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored);
-    // Require sessionToken (SA-based flow); old sessions without it force re-login
+    // Require sessionToken; old sessions without it force re-login
     return parsed?.isAdmin && parsed?.sessionToken ? parsed : null;
   } catch {
     return null;
@@ -48,7 +48,7 @@ function clearAdminSession() {
 }
 
 /**
- * Create a token refresher that calls the server to get a fresh SA access token.
+ * Create a token refresher that calls the server to get a fresh OAuth access token.
  * @param {string} sessionToken - The session JWT for authentication
  * @returns {() => Promise<{access_token: string, expires_in: number}>}
  */
@@ -83,7 +83,10 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const initRef = useRef(false);
 
-  /** Restore an admin session using stored session JWT to get a fresh SA token. */
+  // Ref for Promise-based auth-code flow (one-time OAuth popup)
+  const oauthResolveRef = useRef(null);
+
+  /** Restore an admin session using stored session JWT to get a fresh token. */
   const restoreAdminSession = useCallback(async (adminSession) => {
     try {
       setLoading(true);
@@ -91,7 +94,7 @@ export function AuthProvider({ children }) {
 
       const { sessionToken } = adminSession;
 
-      // Get a fresh SA access token using the stored session JWT
+      // Get a fresh OAuth access token using the stored session JWT + server-side refresh token
       const refresher = createAdminTokenRefresher(sessionToken);
       const { access_token, expires_in } = await refresher();
 
@@ -156,14 +159,12 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  /** Handle successful token acquisition from Google sign-in. */
+  /** Handle successful token acquisition from Google sign-in (non-admin flow). */
   const handleSignInSuccess = useCallback(async (tokenResponse) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Verify required scopes were granted (Google's granular consent
-      // allows users to deselect individual permissions)
       const grantedScopes = tokenResponse.scope || '';
       const hasDriveScope = grantedScopes.includes('drive.file') || grantedScopes.includes('drive');
       const hasSheetsScope = grantedScopes.includes('spreadsheets');
@@ -185,7 +186,6 @@ export function AuthProvider({ children }) {
       const userInfo = await googleAuth.fetchUserInfo(tokenResponse.access_token);
       setUser(userInfo);
 
-      // Provision Drive folders and Sheet (idempotent)
       setProvisioning(true);
       const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
@@ -202,6 +202,7 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Regular Google OAuth login (non-admin, implicit flow)
   const login = useGoogleLogin({
     flow: 'implicit',
     scope: [
@@ -216,22 +217,54 @@ export function AuthProvider({ children }) {
     },
   });
 
+  // Auth-code flow for one-time admin OAuth (to get refresh token)
+  const adminOAuthLogin = useGoogleLogin({
+    flow: 'auth-code',
+    scope: [
+      'https://www.googleapis.com/auth/drive.file',
+      'https://www.googleapis.com/auth/spreadsheets',
+    ].join(' '),
+    onSuccess: (response) => {
+      if (oauthResolveRef.current) {
+        oauthResolveRef.current.resolve(response.code);
+        oauthResolveRef.current = null;
+      }
+    },
+    onError: (err) => {
+      if (oauthResolveRef.current) {
+        oauthResolveRef.current.reject(
+          new Error(err?.type === 'popup_closed' ? 'Google sign-in was cancelled.' : 'Google sign-in failed'),
+        );
+        oauthResolveRef.current = null;
+      }
+    },
+  });
+
+  /** Request an authorization code via popup (returns a Promise). */
+  const requestAuthCode = useCallback(() => {
+    return new Promise((resolve, reject) => {
+      oauthResolveRef.current = { resolve, reject };
+      adminOAuthLogin();
+    });
+  }, [adminOAuthLogin]);
+
   const signIn = useCallback(() => {
     setError(null);
     login();
   }, [login]);
 
   /**
-   * Admin sign-in using Service Account tokens (no Google OAuth popup):
-   * 1. Server-side API verifies credentials and returns SA access token + session JWT
-   * 2. Provision Drive folders and Sheet with SA token
+   * Admin sign-in:
+   * 1. Server verifies credentials and checks for stored refresh token
+   * 2. If refresh token exists: returns user OAuth token (no popup)
+   * 3. If not: one-time Google popup to get auth code → exchange for tokens
    */
   const adminSignIn = useCallback(async (username, password) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Phase 1: Verify credentials + get SA token via server-side API
+      // Phase 1: Verify credentials
       setAdminLoginPhase('verifying');
       const verifyRes = await fetch('/api/verify-admin', {
         method: 'POST',
@@ -242,14 +275,39 @@ export function AuthProvider({ children }) {
         const errData = await verifyRes.json().catch(() => ({}));
         throw new Error(errData.error || 'Invalid username or password');
       }
-      const { name, email, sessionToken, accessToken, expiresIn } = await verifyRes.json();
+      const { name, email, sessionToken, needsOAuth, accessToken, expiresIn } = await verifyRes.json();
 
-      // Phase 2: Set up SA access token and auto-refresh
+      let token = accessToken;
+      let tokenExpiry = expiresIn;
+
+      // Phase 2: If no stored refresh token, do one-time Google OAuth
+      if (needsOAuth) {
+        setAdminLoginPhase('google-signin');
+        const code = await requestAuthCode();
+
+        // Exchange auth code for tokens (server stores refresh token)
+        const exchangeRes = await fetch('/api/exchange-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${sessionToken}`,
+          },
+          body: JSON.stringify({ code }),
+        });
+        if (!exchangeRes.ok) {
+          const errData = await exchangeRes.json().catch(() => ({}));
+          throw new Error(errData.error || 'Token exchange failed');
+        }
+        const exchangeData = await exchangeRes.json();
+        token = exchangeData.access_token;
+        tokenExpiry = exchangeData.expires_in;
+      }
+
+      // Phase 3: Set up token and provision
       setAdminLoginPhase('provisioning');
-      googleAuth.setAccessToken(accessToken, expiresIn);
+      googleAuth.setAccessToken(token, tokenExpiry);
       googleAuth.setTokenRefresher(createAdminTokenRefresher(sessionToken));
 
-      // Phase 3: Provision Drive folders and Sheet
       setProvisioning(true);
       const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
@@ -274,11 +332,10 @@ export function AuthProvider({ children }) {
       setAdminLoginPhase(null);
       setLoading(false);
     }
-  }, []);
+  }, [requestAuthCode]);
 
   const signOut = useCallback(async () => {
     if (isAdmin) {
-      // SA tokens should not be revoked via Google's OAuth revoke endpoint
       googleAuth.clearAuth();
     } else {
       await googleAuth.signOut();

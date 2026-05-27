@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs';
 import {
   signJwt,
-  base64url,
   createSessionToken,
-  getAdminAccessToken,
+  getSAAccessToken,
+  getStoredRefreshToken,
+  refreshUserOAuthToken,
 } from './_lib/sa-utils.js';
 
 const SA_EMAIL = process.env.SA_CLIENT_EMAIL;
@@ -12,7 +13,6 @@ const SPREADSHEET_ID = process.env.SA_SPREADSHEET_ID;
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const SHEETS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly';
 const ADMIN_WORKSHEET = 'admin_users';
 
 export default async function handler(req, res) {
@@ -30,67 +30,48 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Verify credentials using a readonly-scoped SA token
-    const readonlyToken = await getReadonlyToken();
-    const rows = await readAdminUsers(readonlyToken);
+    // Verify credentials using SA token
+    const saToken = await getSAAccessToken();
+    const rows = await readAdminUsers(saToken);
     const admin = await verifyCredentials(rows, username, password);
 
-    // Generate SA access token with admin scopes (drive.file + spreadsheets)
-    const adminToken = await getAdminAccessToken();
-
-    // Generate long-lived session JWT for token refresh
+    // Generate session JWT for token refresh
     const sessionToken = createSessionToken({
       sub: admin.email,
       name: admin.name,
       email: admin.email,
     });
 
+    // Check if this admin has a stored refresh token
+    let accessToken = null;
+    let expiresIn = null;
+    let needsOAuth = true;
+
+    try {
+      const refreshToken = await getStoredRefreshToken(admin.email);
+      if (refreshToken) {
+        const tokenResult = await refreshUserOAuthToken(refreshToken);
+        accessToken = tokenResult.access_token;
+        expiresIn = tokenResult.expires_in;
+        needsOAuth = false;
+      }
+    } catch (err) {
+      // Refresh token might be invalid/revoked — require re-authorization
+      console.warn('Stored refresh token failed, needs re-auth:', err.message);
+    }
+
     return res.status(200).json({
       success: true,
       name: admin.name,
       email: admin.email,
       sessionToken,
-      accessToken: adminToken.access_token,
-      expiresIn: adminToken.expires_in,
+      needsOAuth,
+      ...(accessToken && { accessToken, expiresIn }),
     });
   } catch (err) {
     const status = err.status || 401;
     return res.status(status).json({ error: err.message });
   }
-}
-
-/**
- * Get a readonly-scoped SA token for credential verification.
- * Separate from getAdminAccessToken which uses broader scopes.
- */
-async function getReadonlyToken() {
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: SA_EMAIL,
-    scope: SCOPES,
-    aud: TOKEN_URL,
-    iat: now,
-    exp: now + 3600,
-  };
-
-  const jwt = signJwt(payload);
-
-  const response = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw Object.assign(new Error(`SA token exchange failed: ${text}`), { status: 500 });
-  }
-
-  const data = await response.json();
-  return data.access_token;
 }
 
 /**
@@ -142,10 +123,8 @@ async function verifyCredentials(rows, username, password) {
 
     let match = false;
     if (storedPassword.startsWith('$2')) {
-      // bcrypt hash
       match = await bcrypt.compare(password, storedPassword);
     } else {
-      // Plaintext fallback (temporary, until migration script is run)
       match = storedPassword === password;
     }
 
@@ -154,6 +133,5 @@ async function verifyCredentials(rows, username, password) {
     }
   }
 
-  // Generic message to prevent username enumeration
   throw Object.assign(new Error('Invalid username or password'), { status: 401 });
 }
