@@ -1,5 +1,10 @@
-import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
+import {
+  signJwt,
+  base64url,
+  createSessionToken,
+  getAdminAccessToken,
+} from './_lib/sa-utils.js';
 
 const SA_EMAIL = process.env.SA_CLIENT_EMAIL;
 const SA_PRIVATE_KEY = process.env.SA_PRIVATE_KEY;
@@ -25,14 +30,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const accessToken = await getServiceAccountToken();
-    const rows = await readAdminUsers(accessToken);
+    // Verify credentials using a readonly-scoped SA token
+    const readonlyToken = await getReadonlyToken();
+    const rows = await readAdminUsers(readonlyToken);
     const admin = await verifyCredentials(rows, username, password);
+
+    // Generate SA access token with admin scopes (drive.file + spreadsheets)
+    const adminToken = await getAdminAccessToken();
+
+    // Generate long-lived session JWT for token refresh
+    const sessionToken = createSessionToken({
+      sub: admin.email,
+      name: admin.name,
+      email: admin.email,
+    });
 
     return res.status(200).json({
       success: true,
       name: admin.name,
       email: admin.email,
+      sessionToken,
+      accessToken: adminToken.access_token,
+      expiresIn: adminToken.expires_in,
     });
   } catch (err) {
     const status = err.status || 401;
@@ -41,10 +60,10 @@ export default async function handler(req, res) {
 }
 
 /**
- * Get a Google access token using Service Account JWT exchange.
- * Uses Node.js crypto instead of Web Crypto API.
+ * Get a readonly-scoped SA token for credential verification.
+ * Separate from getAdminAccessToken which uses broader scopes.
  */
-async function getServiceAccountToken() {
+async function getReadonlyToken() {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     iss: SA_EMAIL,
@@ -72,25 +91,6 @@ async function getServiceAccountToken() {
 
   const data = await response.json();
   return data.access_token;
-}
-
-/**
- * Create an RS256-signed JWT using Node.js crypto module.
- */
-function signJwt(payload) {
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const encodedHeader = base64url(JSON.stringify(header));
-  const encodedPayload = base64url(JSON.stringify(payload));
-  const signingInput = `${encodedHeader}.${encodedPayload}`;
-
-  // Normalize PEM: env vars may store \n as literal backslash-n
-  const pem = SA_PRIVATE_KEY.replace(/\\n/g, '\n');
-
-  const sign = crypto.createSign('RSA-SHA256');
-  sign.update(signingInput);
-  const signature = sign.sign(pem, 'base64url');
-
-  return `${signingInput}.${signature}`;
 }
 
 /**
@@ -156,8 +156,4 @@ async function verifyCredentials(rows, username, password) {
 
   // Generic message to prevent username enumeration
   throw Object.assign(new Error('Invalid username or password'), { status: 401 });
-}
-
-function base64url(str) {
-  return Buffer.from(str).toString('base64url');
 }

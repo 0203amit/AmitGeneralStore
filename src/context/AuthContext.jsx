@@ -9,11 +9,16 @@ export const AuthContext = createContext(null);
 const ADMIN_SESSION_KEY = 'admin_session';
 
 /** Save admin session to localStorage (persists across browser restarts). */
-function saveAdminSession(userInfo) {
+function saveAdminSession(userInfo, sessionToken) {
   try {
     localStorage.setItem(
       ADMIN_SESSION_KEY,
-      JSON.stringify({ name: userInfo.name, email: userInfo.email, isAdmin: true }),
+      JSON.stringify({
+        name: userInfo.name,
+        email: userInfo.email,
+        isAdmin: true,
+        sessionToken,
+      }),
     );
   } catch {
     // localStorage may be unavailable in some contexts
@@ -26,7 +31,8 @@ function getAdminSession() {
     const stored = localStorage.getItem(ADMIN_SESSION_KEY);
     if (!stored) return null;
     const parsed = JSON.parse(stored);
-    return parsed?.isAdmin ? parsed : null;
+    // Require sessionToken (SA-based flow); old sessions without it force re-login
+    return parsed?.isAdmin && parsed?.sessionToken ? parsed : null;
   } catch {
     return null;
   }
@@ -39,6 +45,25 @@ function clearAdminSession() {
   } catch {
     // ignore
   }
+}
+
+/**
+ * Create a token refresher that calls the server to get a fresh SA access token.
+ * @param {string} sessionToken - The session JWT for authentication
+ * @returns {() => Promise<{access_token: string, expires_in: number}>}
+ */
+function createAdminTokenRefresher(sessionToken) {
+  return async () => {
+    const res = await fetch('/api/refresh-admin-token', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || 'Token refresh failed');
+    }
+    return res.json();
+  };
 }
 
 /**
@@ -58,28 +83,34 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const initRef = useRef(false);
 
-  /** Restore an admin session: silent OAuth for Drive access, then provision. */
-  const restoreAdminSession = useCallback(async (adminUser) => {
+  /** Restore an admin session using stored session JWT to get a fresh SA token. */
+  const restoreAdminSession = useCallback(async (adminSession) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Silent OAuth — works if Google session exists in browser
-      const tokenResponse = await googleAuth.requestOAuthToken({ silent: true });
-      googleAuth.setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
+      const { sessionToken } = adminSession;
+
+      // Get a fresh SA access token using the stored session JWT
+      const refresher = createAdminTokenRefresher(sessionToken);
+      const { access_token, expires_in } = await refresher();
+
+      googleAuth.setAccessToken(access_token, expires_in);
+      googleAuth.setTokenRefresher(refresher);
 
       setProvisioning(true);
       const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
-      setUser({ name: adminUser.name, email: adminUser.email, picture: null });
+      setUser({ name: adminSession.name, email: adminSession.email, picture: null });
       setIsAdmin(true);
       setProvisioning(false);
     } catch (err) {
-      console.warn('Admin session restore skipped (re-login required):', err.message);
+      console.warn('Admin session restore failed (re-login required):', err.message);
       clearAdminSession();
       googleAuth.clearAuth();
       setUser(null);
+      setIsAdmin(false);
       setProvisioning(false);
     } finally {
       setLoading(false);
@@ -112,6 +143,7 @@ export function AuthProvider({ children }) {
     googleAuth.setAuthErrorCallback((err) => {
       setError(err.message);
       setUser(null);
+      setIsAdmin(false);
       setFolderIds(null);
       setSpreadsheetId(null);
       clearFolderCache();
@@ -190,17 +222,16 @@ export function AuthProvider({ children }) {
   }, [login]);
 
   /**
-   * Hybrid admin sign-in:
-   * 1. Server-side API verifies credentials (SA key stays on server)
-   * 2. Silent OAuth (no popup) → fallback to consent popup (first time only)
-   * 3. Provision Drive folders and Sheet with OAuth token
+   * Admin sign-in using Service Account tokens (no Google OAuth popup):
+   * 1. Server-side API verifies credentials and returns SA access token + session JWT
+   * 2. Provision Drive folders and Sheet with SA token
    */
   const adminSignIn = useCallback(async (username, password) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Phase 1: Verify credentials via server-side API
+      // Phase 1: Verify credentials + get SA token via server-side API
       setAdminLoginPhase('verifying');
       const verifyRes = await fetch('/api/verify-admin', {
         method: 'POST',
@@ -211,52 +242,23 @@ export function AuthProvider({ children }) {
         const errData = await verifyRes.json().catch(() => ({}));
         throw new Error(errData.error || 'Invalid username or password');
       }
-      const adminUser = await verifyRes.json();
+      const { name, email, sessionToken, accessToken, expiresIn } = await verifyRes.json();
 
-      // Phase 2: Get OAuth token (silent-first, popup fallback)
-      setAdminLoginPhase('google-signin');
-      let tokenResponse;
-      try {
-        tokenResponse = await googleAuth.requestOAuthToken({ silent: true });
-      } catch {
-        // Silent failed (first-time login or expired Google session) — show popup
-        tokenResponse = await googleAuth.requestOAuthToken({ silent: false });
-      }
-
-      // Verify required scopes were granted
-      const grantedScopes = tokenResponse.scope || '';
-      const hasDriveScope = grantedScopes.includes('drive.file') || grantedScopes.includes('drive');
-      const hasSheetsScope = grantedScopes.includes('spreadsheets');
-      if (!hasDriveScope || !hasSheetsScope) {
-        const missing = [];
-        if (!hasDriveScope) missing.push('Google Drive');
-        if (!hasSheetsScope) missing.push('Google Sheets');
-        throw new Error(
-          `Access to ${missing.join(' and ')} was not granted. ` +
-            'Please sign in again and allow all requested permissions.',
-        );
-      }
-
-      // Phase 3: Provision with OAuth token
+      // Phase 2: Set up SA access token and auto-refresh
       setAdminLoginPhase('provisioning');
-      googleAuth.setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
+      googleAuth.setAccessToken(accessToken, expiresIn);
+      googleAuth.setTokenRefresher(createAdminTokenRefresher(sessionToken));
 
-      const googleUserInfo = await googleAuth.fetchUserInfo(tokenResponse.access_token);
-
+      // Phase 3: Provision Drive folders and Sheet
       setProvisioning(true);
       const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
-      setUser({
-        name: adminUser.name,
-        email: googleUserInfo.email,
-        picture: googleUserInfo.picture || null,
-      });
+      setUser({ name, email, picture: null });
       setProvisioning(false);
 
       setIsAdmin(true);
-      // Save session so page refresh can restore via silent OAuth
-      saveAdminSession(adminUser);
+      saveAdminSession({ name, email }, sessionToken);
     } catch (err) {
       console.error('Admin sign-in failed:', err);
       const msg = err?.result?.error?.message || err?.message || 'Admin sign-in failed';
@@ -275,7 +277,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await googleAuth.signOut();
+    if (isAdmin) {
+      // SA tokens should not be revoked via Google's OAuth revoke endpoint
+      googleAuth.clearAuth();
+    } else {
+      await googleAuth.signOut();
+    }
     clearFolderCache();
     clearSheetCache();
     clearAdminSession();
@@ -284,7 +291,7 @@ export function AuthProvider({ children }) {
     setFolderIds(null);
     setSpreadsheetId(null);
     setError(null);
-  }, []);
+  }, [isAdmin]);
 
   const value = {
     user,
