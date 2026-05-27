@@ -18,21 +18,30 @@ const PAYMENT_MODE_OPTIONS = [
 /**
  * Single field input with optional low-confidence indicator.
  */
-function FieldInput({ label, value, onChange, confidence, type = 'text', required = false, disabled }) {
+function FieldInput({
+  label,
+  value,
+  onChange,
+  confidence,
+  type = 'text',
+  required = false,
+  disabled,
+}) {
   const { t } = useTranslation();
   const isLowConfidence = confidence !== undefined && confidence < CONFIDENCE_THRESHOLD;
   const isDate = type === 'date';
 
-  const dateValue = isDate && value
-    ? (() => {
-        try {
-          const d = parse(value, 'yyyy-MM-dd', new Date());
-          return isNaN(d.getTime()) ? null : d;
-        } catch {
-          return null;
-        }
-      })()
-    : null;
+  const dateValue =
+    isDate && value
+      ? (() => {
+          try {
+            const d = parse(value, 'yyyy-MM-dd', new Date());
+            return isNaN(d.getTime()) ? null : d;
+          } catch {
+            return null;
+          }
+        })()
+      : null;
 
   const baseInputClass = `w-full rounded-md border px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 ${
     isLowConfidence
@@ -107,7 +116,9 @@ export default function ExtractionForm({
     <div className="space-y-6">
       {/* Bill Fields */}
       <fieldset className="rounded-lg border border-slate-200 p-4">
-        <legend className="px-2 font-heading text-base font-semibold text-slate-800">{t('extraction.billDetails')}</legend>
+        <legend className="px-2 font-heading text-base font-semibold text-slate-800">
+          {t('extraction.billDetails')}
+        </legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldInput
             label={t('extraction.traderName')}
@@ -162,7 +173,9 @@ export default function ExtractionForm({
 
       {/* Payment Fields */}
       <fieldset className="rounded-lg border border-slate-200 p-4">
-        <legend className="px-2 font-heading text-base font-semibold text-slate-800">{t('extraction.paymentDetails')}</legend>
+        <legend className="px-2 font-heading text-base font-semibold text-slate-800">
+          {t('extraction.paymentDetails')}
+        </legend>
         <div className="grid gap-4 sm:grid-cols-2">
           {paymentFields.payment_mode === 'gpay' ? (
             <>

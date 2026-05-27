@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useAuth from './hooks/useAuth';
@@ -16,7 +16,10 @@ const SettingsPage = lazy(() => import('./components/settings/SettingsPage'));
 
 function Landing() {
   const { isAuthenticated, loading, error } = useAuth();
-  document.title = buildPageTitle(APP_TITLE_SUFFIX);
+
+  useEffect(() => {
+    document.title = buildPageTitle(APP_TITLE_SUFFIX);
+  }, []);
 
   if (loading) {
     return (
@@ -33,9 +36,7 @@ function Landing() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <SignInButton />
-      {error && (
-        <p className="mt-4 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
     </div>
   );
 }
@@ -59,14 +60,22 @@ function ProtectedLayout({ children }) {
 
 export default function App() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><LoadingSpinner size="lg" /></div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <LoadingSpinner size="lg" />
+        </div>
+      }
+    >
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <ProtectedLayout><DashboardPage /></ProtectedLayout>
+              <ProtectedLayout>
+                <DashboardPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -74,7 +83,9 @@ export default function App() {
           path="/upload"
           element={
             <ProtectedRoute>
-              <ProtectedLayout><UploadPage /></ProtectedLayout>
+              <ProtectedLayout>
+                <UploadPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -82,7 +93,9 @@ export default function App() {
           path="/history"
           element={
             <ProtectedRoute>
-              <ProtectedLayout><HistoryPage /></ProtectedLayout>
+              <ProtectedLayout>
+                <HistoryPage />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -90,7 +103,9 @@ export default function App() {
           path="/history/:recordId"
           element={
             <ProtectedRoute>
-              <ProtectedLayout><RecordDetail /></ProtectedLayout>
+              <ProtectedLayout>
+                <RecordDetail />
+              </ProtectedLayout>
             </ProtectedRoute>
           }
         />
@@ -99,7 +114,9 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AdminGuard>
-                <ProtectedLayout><SettingsPage /></ProtectedLayout>
+                <ProtectedLayout>
+                  <SettingsPage />
+                </ProtectedLayout>
               </AdminGuard>
             </ProtectedRoute>
           }

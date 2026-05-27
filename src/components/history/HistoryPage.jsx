@@ -75,7 +75,9 @@ export default function HistoryPage() {
   const [includeArchived, setIncludeArchived] = useState(false);
   const [showBulkExportConfirm, setShowBulkExportConfirm] = useState(false);
 
-  document.title = buildPageTitle(t('navbar.history'));
+  useEffect(() => {
+    document.title = buildPageTitle(t('navbar.history'));
+  }, [t]);
 
   // Initialize hook with URL params
   const initialFilters = parseUrlFilters(searchParams);
@@ -135,7 +137,7 @@ export default function HistoryPage() {
         setSortBy(field);
       }
     },
-    [sortBy, setSortBy, toggleSortDir]
+    [sortBy, setSortBy, toggleSortDir],
   );
 
   // Clear selection when filters, search, or sort change
@@ -174,7 +176,10 @@ export default function HistoryPage() {
       const blob = await generateBulkProofPacketPDF(selectedRecords);
       const filename = `bulk_proof_${selectedRecords.length}_records_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       saveAs(blob, filename);
-      addToast({ type: 'success', message: t('history.proofDownloaded', { count: selectedRecords.length }) });
+      addToast({
+        type: 'success',
+        message: t('history.proofDownloaded', { count: selectedRecords.length }),
+      });
       setSelectedIds(new Set());
     } catch (err) {
       console.error('Bulk proof generation failed:', err);
@@ -187,9 +192,7 @@ export default function HistoryPage() {
   async function handleExportCsv() {
     setCsvExporting(true);
     try {
-      const exportRecords = includeArchived
-        ? await getAllRecords()
-        : filteredRecords;
+      const exportRecords = includeArchived ? await getAllRecords() : filteredRecords;
       const csvString = generateCsvString(exportRecords);
       const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8' });
       saveAs(blob, buildCsvFilename());
@@ -233,7 +236,9 @@ export default function HistoryPage() {
     <div className="p-4 sm:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-heading text-xl font-bold text-slate-900 sm:text-2xl">{t('history.title')}</h1>
+          <h1 className="font-heading text-xl font-bold text-slate-900 sm:text-2xl">
+            {t('history.title')}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
             {t('history.recordsFound', { count: totalFiltered })}
           </p>

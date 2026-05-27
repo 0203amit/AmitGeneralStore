@@ -6,13 +6,7 @@
  */
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Search,
-  Calendar,
-  Filter,
-  X,
-  ChevronDown,
-} from 'lucide-react';
+import { Search, Calendar, Filter, X, ChevronDown } from 'lucide-react';
 import { DATE_PRESETS, getPresetRange, formatDisplayDate } from '../../utils/dateHelpers';
 
 const PAYMENT_MODES = [
@@ -84,9 +78,7 @@ export default function FilterBar({
 
   function togglePaymentMode(mode) {
     const current = filters.paymentModes || [];
-    const updated = current.includes(mode)
-      ? current.filter((m) => m !== mode)
-      : [...current, mode];
+    const updated = current.includes(mode) ? current.filter((m) => m !== mode) : [...current, mode];
     onFiltersChange({ ...filters, paymentModes: updated });
   }
 
@@ -151,7 +143,7 @@ export default function FilterBar({
       {/* Search bar + filter toggle */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             value={searchQuery}
@@ -162,6 +154,7 @@ export default function FilterBar({
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
+              aria-label={t('history.clearSearch', 'Clear search')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <X className="h-4 w-4" />
@@ -197,6 +190,7 @@ export default function FilterBar({
               {chip.label}
               <button
                 onClick={() => removeChip(chip.type, chip.value)}
+                aria-label={`${t('history.removeFilter', 'Remove filter')}: ${chip.label}`}
                 className="ml-0.5 cursor-pointer transition-colors duration-150 hover:text-red-600"
               >
                 <X className="h-3 w-3" />
@@ -227,7 +221,7 @@ export default function FilterBar({
                   <button
                     key={preset.value}
                     onClick={() => applyPreset(preset.value)}
-                    className="cursor-pointer rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 transition-colors duration-200 hover:border-brand-primary hover:text-brand-primary"
+                    className="cursor-pointer rounded-md border border-slate-200 px-3 py-2 text-xs text-slate-600 transition-colors duration-200 hover:border-brand-primary hover:text-brand-primary"
                   >
                     {t(preset.labelKey)}
                   </button>
@@ -246,9 +240,7 @@ export default function FilterBar({
                 <input
                   type="date"
                   value={filters.dateEnd || ''}
-                  onChange={(e) =>
-                    onFiltersChange({ ...filters, dateEnd: e.target.value || null })
-                  }
+                  onChange={(e) => onFiltersChange({ ...filters, dateEnd: e.target.value || null })}
                   className="w-full rounded-md border border-slate-200 px-2 py-1.5 text-xs focus:border-brand-primary focus:outline-none"
                 />
               </div>
@@ -331,9 +323,11 @@ export default function FilterBar({
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
               {traderDropdownOpen && (
-                <div className="absolute z-30 mt-1 max-h-48 w-56 animate-fadeIn overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                <div className="absolute z-40 mt-1 max-h-48 w-56 animate-fadeIn overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
                   {uniqueTraders.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-slate-400">{t('history.noTradersFound')}</p>
+                    <p className="px-3 py-2 text-xs text-slate-400">
+                      {t('history.noTradersFound')}
+                    </p>
                   ) : (
                     uniqueTraders.map((trader) => {
                       const isSelected = (filters.traders || []).includes(trader);

@@ -39,7 +39,9 @@ export default function SettingsPage() {
   const [backupGenerating, setBackupGenerating] = useState(false);
   const [backupProgress, setBackupProgress] = useState(null);
 
-  document.title = buildPageTitle(t('navbar.settings'));
+  useEffect(() => {
+    document.title = buildPageTitle(t('navbar.settings'));
+  }, [t]);
 
   const fetchArchived = useCallback(async () => {
     setLoading(true);
@@ -107,13 +109,13 @@ export default function SettingsPage() {
   const driveFolderUrl = folderIds?.rootId
     ? `https://drive.google.com/drive/folders/${folderIds.rootId}`
     : null;
-  const sheetUrl = spreadsheetId
-    ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}`
-    : null;
+  const sheetUrl = spreadsheetId ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}` : null;
 
   return (
     <div className="p-4 sm:p-8">
-      <h1 className="mb-6 font-heading text-xl font-bold text-slate-900 sm:text-2xl">{t('settings.title')}</h1>
+      <h1 className="mb-6 font-heading text-xl font-bold text-slate-900 sm:text-2xl">
+        {t('settings.title')}
+      </h1>
 
       <div className="space-y-6">
         {/* Archive Management */}
@@ -123,9 +125,7 @@ export default function SettingsPage() {
               <Archive className="h-5 w-5 text-slate-500" />
               {t('settings.archivedRecords')}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {t('settings.archivedRecordsDesc')}
-            </p>
+            <p className="mt-1 text-sm text-slate-500">{t('settings.archivedRecordsDesc')}</p>
           </div>
           <div className="px-4 py-4 sm:px-6">
             {loading ? (
@@ -163,12 +163,16 @@ export default function SettingsPage() {
                         {t('settings.recordInfo', {
                           number: record.invoice_number || '\u2014',
                           date: formatDisplayDate(record.bill_date),
-                          amount: record.bill_amount ? formatCurrency(record.bill_amount) : '\u2014',
+                          amount: record.bill_amount
+                            ? formatCurrency(record.bill_amount)
+                            : '\u2014',
                         })}
                       </p>
                       {record.archived_at && (
                         <p className="mt-0.5 text-xs text-slate-400">
-                          {t('settings.archivedTime', { date: formatTimestamp(record.archived_at) })}
+                          {t('settings.archivedTime', {
+                            date: formatTimestamp(record.archived_at),
+                          })}
                           {record.archived_reason ? ` \u2014 ${record.archived_reason}` : ''}
                         </p>
                       )}
@@ -204,9 +208,7 @@ export default function SettingsPage() {
               <HardDriveDownload className="h-5 w-5 text-slate-500" />
               {t('settings.dataBackup')}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              {t('settings.dataBackupDesc')}
-            </p>
+            <p className="mt-1 text-sm text-slate-500">{t('settings.dataBackupDesc')}</p>
           </div>
           <div className="px-4 py-4 sm:px-6">
             <button
@@ -231,27 +233,34 @@ export default function SettingsPage() {
               <div className="mt-4">
                 <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
                   <span>{t('settings.downloadingImages')}</span>
-                  <span>{t('settings.imageProgress', { current: backupProgress.current, total: backupProgress.total })}</span>
+                  <span>
+                    {t('settings.imageProgress', {
+                      current: backupProgress.current,
+                      total: backupProgress.total,
+                    })}
+                  </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                   <div
                     className="h-full rounded-full bg-brand-primary transition-all duration-300"
-                    style={{ width: `${Math.round((backupProgress.current / backupProgress.total) * 100)}%` }}
+                    style={{
+                      width: `${Math.round((backupProgress.current / backupProgress.total) * 100)}%`,
+                    }}
                   />
                 </div>
               </div>
             )}
 
-            <p className="mt-4 text-xs text-slate-400">
-              {t('settings.backupNote')}
-            </p>
+            <p className="mt-4 text-xs text-slate-400">{t('settings.backupNote')}</p>
           </div>
         </section>
 
         {/* Account */}
         <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-4 py-4 sm:px-6">
-            <h2 className="font-heading text-base font-semibold text-slate-900">{t('settings.account')}</h2>
+            <h2 className="font-heading text-base font-semibold text-slate-900">
+              {t('settings.account')}
+            </h2>
           </div>
           <div className="px-4 py-4 sm:px-6">
             <div className="flex items-center justify-between">

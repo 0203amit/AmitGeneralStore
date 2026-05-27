@@ -3,11 +3,7 @@
  * Uses gapi.client.drive for metadata operations and fetch() for
  * binary file uploads/downloads (multipart upload, alt=media download).
  */
-import {
-  DRIVE_ROOT_FOLDER,
-  DRIVE_BILLS_FOLDER,
-  DRIVE_PAYMENTS_FOLDER,
-} from '../config/branding';
+import { DRIVE_ROOT_FOLDER, DRIVE_BILLS_FOLDER, DRIVE_PAYMENTS_FOLDER } from '../config/branding';
 import { getAccessToken } from './googleAuth';
 
 let cachedFolderIds = null;
@@ -116,12 +112,15 @@ export async function uploadImage(imageBlob, type, recordId) {
   const imageBuffer = await imageBlob.arrayBuffer();
 
   const body = new Uint8Array(
-    metadataBytes.length + mediaHeaderBytes.length + imageBuffer.byteLength + closingBytes.length
+    metadataBytes.length + mediaHeaderBytes.length + imageBuffer.byteLength + closingBytes.length,
   );
   let offset = 0;
-  body.set(metadataBytes, offset); offset += metadataBytes.length;
-  body.set(mediaHeaderBytes, offset); offset += mediaHeaderBytes.length;
-  body.set(new Uint8Array(imageBuffer), offset); offset += imageBuffer.byteLength;
+  body.set(metadataBytes, offset);
+  offset += metadataBytes.length;
+  body.set(mediaHeaderBytes, offset);
+  offset += mediaHeaderBytes.length;
+  body.set(new Uint8Array(imageBuffer), offset);
+  offset += imageBuffer.byteLength;
   body.set(closingBytes, offset);
 
   const response = await fetch(
@@ -133,7 +132,7 @@ export async function uploadImage(imageBlob, type, recordId) {
         'Content-Type': `multipart/related; boundary=${boundary}`,
       },
       body,
-    }
+    },
   );
 
   if (!response.ok) {
@@ -167,10 +166,9 @@ export async function getImageUrl(fileId) {
 export async function getImageBlob(fileId) {
   const token = getAccessToken();
   if (!token) throw new Error('Not authenticated. Please sign in again.');
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!response.ok) throw new Error(`Failed to download image (${response.status})`);
   return response.blob();
 }
@@ -184,13 +182,10 @@ export async function getImageBlob(fileId) {
 export async function deleteImage(fileId) {
   const token = getAccessToken();
   if (!token) throw new Error('Not authenticated');
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}`,
-    {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!response.ok && response.status !== 404) {
     throw new Error(`Failed to delete image (${response.status})`);
   }

@@ -99,9 +99,7 @@ export default function MonthlySummary({ records }) {
               </div>
               <div>
                 <p className="text-sm text-slate-500">{card.label}</p>
-                <p className="font-heading text-xl font-semibold text-slate-900">
-                  {card.value}
-                </p>
+                <p className="font-heading text-xl font-semibold text-slate-900">{card.value}</p>
               </div>
             </div>
           </div>

@@ -58,7 +58,7 @@ export default function ConfirmDialog({
     function handleTab(e) {
       if (e.key !== 'Tab' || !dialogRef.current) return;
       const focusable = dialogRef.current.querySelectorAll(
-        'button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        'button:not([disabled]), [tabindex]:not([tabindex="-1"])',
       );
       if (focusable.length === 0) return;
       const first = focusable[0];

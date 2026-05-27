@@ -20,8 +20,8 @@ async function getWorker() {
     const { createWorker } = await import('tesseract.js');
     workerInstance = await createWorker('eng');
     await workerInstance.setParameters({
-      tessedit_pageseg_mode: '6',       // Single uniform block of text
-      preserve_interword_spaces: '1',   // Maintain word spacing (important for tables)
+      tessedit_pageseg_mode: '6', // Single uniform block of text
+      preserve_interword_spaces: '1', // Maintain word spacing (important for tables)
     });
   }
   return workerInstance;
@@ -103,7 +103,7 @@ async function preprocessForOcr(imageBlob) {
     if (pixels[i] < 50) darkCount++;
     if (pixels[i] > 200) brightCount++;
   }
-  const isCleanScreenshot = (darkCount + brightCount) / totalPixels > 0.60;
+  const isCleanScreenshot = (darkCount + brightCount) / totalPixels > 0.6;
 
   if (!isCleanScreenshot) {
     // ── Step 3: Contrast stretching (phone photos only) ──
@@ -135,8 +135,7 @@ async function preprocessForOcr(imageBlob) {
       let rowSum = 0;
       for (let x = 0; x < w; x++) {
         rowSum += pixels[(y * w + x) * 4];
-        integral[(y + 1) * (w + 1) + (x + 1)] =
-          rowSum + integral[y * (w + 1) + (x + 1)];
+        integral[(y + 1) * (w + 1) + (x + 1)] = rowSum + integral[y * (w + 1) + (x + 1)];
       }
     }
 
@@ -160,7 +159,7 @@ async function preprocessForOcr(imageBlob) {
 
         const mean = sum / area;
         const idx = (y * w + x) * 4;
-        const val = pixels[idx] < (mean - C) ? 0 : 255;
+        const val = pixels[idx] < mean - C ? 0 : 255;
         output[idx] = val;
         output[idx + 1] = val;
         output[idx + 2] = val;

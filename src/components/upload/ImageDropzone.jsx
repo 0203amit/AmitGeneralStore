@@ -43,7 +43,7 @@ export default function ImageDropzone({
       if (!validation.valid) return; // Dropzone config already filters
       onFileSelect(selected);
     },
-    [onFileSelect]
+    [onFileSelect],
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

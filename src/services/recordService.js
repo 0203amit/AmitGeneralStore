@@ -78,7 +78,9 @@ function addPageFooter(doc, pageNum, totalPages) {
   doc.setFontSize(8);
   doc.setTextColor(150, 150, 150);
   doc.text(BUSINESS_NAME, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
-  doc.text(`Page ${pageNum} of ${totalPages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 10, { align: 'right' });
+  doc.text(`Page ${pageNum} of ${totalPages}`, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 10, {
+    align: 'right',
+  });
   doc.setTextColor(0, 0, 0);
 }
 
@@ -119,10 +121,24 @@ function addCoverPage(doc, record, generatedAt) {
     y = drawLabelValue(doc, t('pdf.invoiceNo'), record.invoice_number, MARGIN, y, labelWidth);
   }
   if (record.bill_date) {
-    y = drawLabelValue(doc, t('pdf.billDate'), formatDisplayDate(record.bill_date), MARGIN, y, labelWidth);
+    y = drawLabelValue(
+      doc,
+      t('pdf.billDate'),
+      formatDisplayDate(record.bill_date),
+      MARGIN,
+      y,
+      labelWidth,
+    );
   }
   if (record.bill_amount) {
-    y = drawLabelValue(doc, t('pdf.billAmount'), `Rs.${formatCurrency(record.bill_amount)}`, MARGIN, y, labelWidth);
+    y = drawLabelValue(
+      doc,
+      t('pdf.billAmount'),
+      `Rs.${formatCurrency(record.bill_amount)}`,
+      MARGIN,
+      y,
+      labelWidth,
+    );
   }
   y += 5;
 
@@ -132,7 +148,14 @@ function addCoverPage(doc, record, generatedAt) {
       y = drawLabelValue(doc, t('pdf.upiTxnId'), record.upi_transaction_id, MARGIN, y, labelWidth);
     }
     if (record.google_transaction_id) {
-      y = drawLabelValue(doc, t('pdf.googleTxnId'), record.google_transaction_id, MARGIN, y, labelWidth);
+      y = drawLabelValue(
+        doc,
+        t('pdf.googleTxnId'),
+        record.google_transaction_id,
+        MARGIN,
+        y,
+        labelWidth,
+      );
     }
   } else {
     if (record.utr_number) {
@@ -140,13 +163,34 @@ function addCoverPage(doc, record, generatedAt) {
     }
   }
   if (record.payment_date) {
-    y = drawLabelValue(doc, t('pdf.paymentDate'), formatDisplayDate(record.payment_date), MARGIN, y, labelWidth);
+    y = drawLabelValue(
+      doc,
+      t('pdf.paymentDate'),
+      formatDisplayDate(record.payment_date),
+      MARGIN,
+      y,
+      labelWidth,
+    );
   }
   if (record.payment_mode) {
-    y = drawLabelValue(doc, t('pdf.paymentMode'), PAYMENT_MODE_LABELS[record.payment_mode] || record.payment_mode, MARGIN, y, labelWidth);
+    y = drawLabelValue(
+      doc,
+      t('pdf.paymentMode'),
+      PAYMENT_MODE_LABELS[record.payment_mode] || record.payment_mode,
+      MARGIN,
+      y,
+      labelWidth,
+    );
   }
   if (record.paid_amount) {
-    y = drawLabelValue(doc, t('pdf.paidAmount'), `Rs.${formatCurrency(record.paid_amount)}`, MARGIN, y, labelWidth);
+    y = drawLabelValue(
+      doc,
+      t('pdf.paidAmount'),
+      `Rs.${formatCurrency(record.paid_amount)}`,
+      MARGIN,
+      y,
+      labelWidth,
+    );
   }
   if (record.payer_name) {
     y = drawLabelValue(doc, t('pdf.payer'), record.payer_name, MARGIN, y, labelWidth);
@@ -163,7 +207,15 @@ function addCoverPage(doc, record, generatedAt) {
 
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
-  doc.text(t('pdf.recordCreated', { date: record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : t('common.notAvailable') }), MARGIN, y);
+  doc.text(
+    t('pdf.recordCreated', {
+      date: record.created_at
+        ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm')
+        : t('common.notAvailable'),
+    }),
+    MARGIN,
+    y,
+  );
   y += 5;
   doc.text(t('pdf.proofGenerated', { date: generatedAt }), MARGIN, y);
   doc.setTextColor(0, 0, 0);
@@ -240,7 +292,10 @@ function addSummaryPage(doc, record, generatedAt) {
     [t('pdf.traderAddress'), field(record.trader_address)],
     [t('pdf.invoiceNumber'), field(record.invoice_number)],
     [t('pdf.billDateLabel'), formatDisplayDate(record.bill_date) || na],
-    [t('pdf.billAmountLabel'), record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : na],
+    [
+      t('pdf.billAmountLabel'),
+      record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : na,
+    ],
     [t('pdf.currencyLabel'), field(record.currency)],
     ...(record.payment_mode === 'gpay'
       ? [
@@ -249,12 +304,21 @@ function addSummaryPage(doc, record, generatedAt) {
         ]
       : [[t('pdf.utrNumberLabel'), field(record.utr_number)]]),
     [t('pdf.paymentDateLabel'), formatDisplayDate(record.payment_date) || na],
-    [t('pdf.paymentModeLabel'), PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode)],
-    [t('pdf.paidAmountLabel'), record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : na],
+    [
+      t('pdf.paymentModeLabel'),
+      PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode),
+    ],
+    [
+      t('pdf.paidAmountLabel'),
+      record.paid_amount ? `\u20B9${formatCurrency(record.paid_amount)}` : na,
+    ],
     [t('pdf.payerName'), field(record.payer_name)],
     [t('pdf.payeeName'), field(record.payee_name)],
     [t('pdf.recordId'), field(record.record_id)],
-    [t('pdf.createdAt'), record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : na],
+    [
+      t('pdf.createdAt'),
+      record.created_at ? format(new Date(record.created_at), 'dd MMM yyyy, HH:mm') : na,
+    ],
     [t('pdf.status'), field(record.status)],
   ];
 
@@ -336,7 +400,11 @@ function addBulkCoverPage(doc, records, generatedAt) {
     doc.text((record.trader_name || na).substring(0, 30), MARGIN + 12, y);
     doc.text((record.invoice_number || na).substring(0, 18), MARGIN + 80, y);
     doc.text(formatDisplayDate(record.bill_date) || na, MARGIN + 120, y);
-    doc.text(record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : na, MARGIN + 150, y);
+    doc.text(
+      record.bill_amount ? `\u20B9${formatCurrency(record.bill_amount)}` : na,
+      MARGIN + 150,
+      y,
+    );
     y += 7;
   });
 
@@ -357,13 +425,9 @@ export async function checkDuplicate(compositeKey, excludeRecordId = null) {
   const records = await getAllRecords();
   const existing = records.find(
     (r) =>
-      r.composite_key === compositeKey &&
-      r.status === 'active' &&
-      r.record_id !== excludeRecordId
+      r.composite_key === compositeKey && r.status === 'active' && r.record_id !== excludeRecordId,
   );
-  return existing
-    ? { isDuplicate: true, existingRecord: existing }
-    : { isDuplicate: false };
+  return existing ? { isDuplicate: true, existingRecord: existing } : { isDuplicate: false };
 }
 
 /**
@@ -384,14 +448,20 @@ export async function checkDuplicate(compositeKey, excludeRecordId = null) {
  * @returns {Promise<Object>} The complete record as saved to Sheet
  * @throws {Error} With user-friendly messages; code='DUPLICATE_DETECTED' for duplicates
  */
-export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFields, forceSave = false }) {
+export async function saveRecord({
+  billBlob,
+  paymentBlob,
+  billFields,
+  paymentFields,
+  forceSave = false,
+}) {
   const recordId = uuidv4();
   const now = new Date().toISOString();
 
   const compositeKey = computeCompositeKey(
     billFields.trader_name,
     billFields.invoice_number,
-    billFields.bill_date
+    billFields.bill_date,
   );
 
   // Duplicate check
@@ -432,7 +502,9 @@ export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFie
       await deleteImage(billFileId);
     } catch (rollbackErr) {
       console.error('Rollback failed: could not delete bill image', rollbackErr);
-      throw new Error(`Failed to upload payment image. Some files may need manual cleanup in Drive. (${err.message})`);
+      throw new Error(
+        `Failed to upload payment image. Some files may need manual cleanup in Drive. (${err.message})`,
+      );
     }
     throw new Error(`Failed to upload payment image: ${err.message || 'Please try again.'}`);
   }
@@ -487,7 +559,9 @@ export async function saveRecord({ billBlob, paymentBlob, billFields, paymentFie
       await Promise.all([deleteImage(billFileId), deleteImage(paymentFileId)]);
     } catch (rollbackErr) {
       console.error('Rollback failed: could not delete images', rollbackErr);
-      throw new Error(`Failed to save record. Some files may need manual cleanup in Drive. (${err.message})`);
+      throw new Error(
+        `Failed to save record. Some files may need manual cleanup in Drive. (${err.message})`,
+      );
     }
     throw new Error(`Failed to save record: ${err.message || 'Please try again.'}`);
   }
@@ -561,14 +635,11 @@ export async function editRecord(recordId, changes) {
     merged.composite_key = computeCompositeKey(
       merged.trader_name,
       merged.invoice_number,
-      merged.bill_date
+      merged.bill_date,
     );
 
     // Duplicate check excluding self
-    const { isDuplicate, existingRecord } = await checkDuplicate(
-      merged.composite_key,
-      recordId
-    );
+    const { isDuplicate, existingRecord } = await checkDuplicate(merged.composite_key, recordId);
     if (isDuplicate) {
       const error = new Error('Duplicate record detected');
       error.code = 'DUPLICATE_DETECTED';
@@ -611,7 +682,9 @@ export function generatePlainTextSummary(record) {
     t('plaintext.invoice', { number: field(record.invoice_number) }),
     t('plaintext.billDate', { date: formatDisplayDate(record.bill_date) || na }),
     t('plaintext.amount', { amount: record.bill_amount ? formatCurrency(record.bill_amount) : na }),
-    t('plaintext.paymentMode', { mode: PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode) }),
+    t('plaintext.paymentMode', {
+      mode: PAYMENT_MODE_LABELS[record.payment_mode] || field(record.payment_mode),
+    }),
     ...(record.payment_mode === 'gpay'
       ? [
           t('plaintext.upiTransactionId', { id: field(record.upi_transaction_id) }),

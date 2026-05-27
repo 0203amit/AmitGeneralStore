@@ -73,16 +73,14 @@ export default function useRecords(initialFilters = {}) {
   const [pageSize, setPageSize] = useState(25);
 
   // Debounced search
-  const debouncedSetSearch = useRef(
-    debounce((q) => setDebouncedSearch(q), 300)
-  ).current;
+  const debouncedSetSearch = useRef(debounce((q) => setDebouncedSearch(q), 300)).current;
 
   const setSearchQuery = useCallback(
     (q) => {
       setSearchQueryImmediate(q);
       debouncedSetSearch(q);
     },
-    [debouncedSetSearch]
+    [debouncedSetSearch],
   );
 
   // Cleanup debounce on unmount
@@ -126,9 +124,7 @@ export default function useRecords(initialFilters = {}) {
     if (debouncedSearch) {
       const query = debouncedSearch.toLowerCase();
       result = result.filter((r) =>
-        SEARCH_FIELDS.some((field) =>
-          (r[field] || '').toLowerCase().includes(query)
-        )
+        SEARCH_FIELDS.some((field) => (r[field] || '').toLowerCase().includes(query)),
       );
     }
 
@@ -151,9 +147,7 @@ export default function useRecords(initialFilters = {}) {
 
     // Payment mode filter
     if (filters.paymentModes && filters.paymentModes.length > 0) {
-      result = result.filter((r) =>
-        filters.paymentModes.includes(r.payment_mode)
-      );
+      result = result.filter((r) => filters.paymentModes.includes(r.payment_mode));
     }
 
     // Amount range filter
@@ -173,9 +167,7 @@ export default function useRecords(initialFilters = {}) {
     // Trader filter
     if (filters.traders && filters.traders.length > 0) {
       const tradersLower = filters.traders.map((t) => t.toLowerCase());
-      result = result.filter((r) =>
-        tradersLower.includes((r.trader_name || '').toLowerCase())
-      );
+      result = result.filter((r) => tradersLower.includes((r.trader_name || '').toLowerCase()));
     }
 
     // Sort
@@ -215,7 +207,12 @@ export default function useRecords(initialFilters = {}) {
     const startIdx = (page - 1) * pageSize;
     const paginated = filtered.slice(startIdx, startIdx + pageSize);
 
-    return { paginatedRecords: paginated, filteredRecords: filtered, totalFiltered: total, totalPages: pages };
+    return {
+      paginatedRecords: paginated,
+      filteredRecords: filtered,
+      totalFiltered: total,
+      totalPages: pages,
+    };
   }, [allRecords, debouncedSearch, filters, sortBy, sortDir, page, pageSize]);
 
   const toggleSortDir = useCallback(() => {

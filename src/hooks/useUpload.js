@@ -170,7 +170,7 @@ export default function useUpload() {
         }
       }
     },
-    [billFields, paymentFields]
+    [billFields, paymentFields],
   );
 
   const dismissDuplicate = useCallback(() => {
@@ -196,10 +196,14 @@ export default function useUpload() {
 
   // Computed: can the form be saved? All required fields must be filled.
   const canSave = !!(
-    billFields && paymentFields &&
-    billFields.trader_name && billFields.invoice_number &&
-    billFields.bill_date && billFields.bill_amount &&
-    paymentFields.payment_date && paymentFields.payment_mode &&
+    billFields &&
+    paymentFields &&
+    billFields.trader_name &&
+    billFields.invoice_number &&
+    billFields.bill_date &&
+    billFields.bill_amount &&
+    paymentFields.payment_date &&
+    paymentFields.payment_mode &&
     paymentFields.paid_amount &&
     (paymentFields.payment_mode === 'gpay' || paymentFields.utr_number)
   );

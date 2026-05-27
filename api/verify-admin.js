@@ -67,10 +67,7 @@ async function getServiceAccountToken() {
 
   if (!response.ok) {
     const text = await response.text();
-    throw Object.assign(
-      new Error(`SA token exchange failed: ${text}`),
-      { status: 500 }
-    );
+    throw Object.assign(new Error(`SA token exchange failed: ${text}`), { status: 500 });
   }
 
   const data = await response.json();
@@ -111,14 +108,13 @@ async function readAdminUsers(accessToken) {
     const text = await response.text();
     if (response.status === 400 || text.includes('Unable to parse range')) {
       throw Object.assign(
-        new Error('Admin users sheet tab not found. Create an "admin_users" tab with columns: username, password, display_name'),
-        { status: 500 }
+        new Error(
+          'Admin users sheet tab not found. Create an "admin_users" tab with columns: username, password, display_name',
+        ),
+        { status: 500 },
       );
     }
-    throw Object.assign(
-      new Error(`Failed to read admin users: ${text}`),
-      { status: 500 }
-    );
+    throw Object.assign(new Error(`Failed to read admin users: ${text}`), { status: 500 });
   }
 
   const data = await response.json();
@@ -131,10 +127,7 @@ async function readAdminUsers(accessToken) {
  */
 async function verifyCredentials(rows, username, password) {
   if (!rows || rows.length <= 1) {
-    throw Object.assign(
-      new Error('No admin users configured'),
-      { status: 500 }
-    );
+    throw Object.assign(new Error('No admin users configured'), { status: 500 });
   }
 
   const trimmedUsername = username.trim().toLowerCase();
@@ -162,10 +155,7 @@ async function verifyCredentials(rows, username, password) {
   }
 
   // Generic message to prevent username enumeration
-  throw Object.assign(
-    new Error('Invalid username or password'),
-    { status: 401 }
-  );
+  throw Object.assign(new Error('Invalid username or password'), { status: 401 });
 }
 
 function base64url(str) {

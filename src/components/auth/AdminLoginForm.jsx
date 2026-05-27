@@ -67,9 +67,7 @@ export default function AdminLoginForm() {
         />
       </div>
 
-      {localError && (
-        <p className="text-sm text-red-600">{localError}</p>
-      )}
+      {localError && <p className="text-sm text-red-600">{localError}</p>}
 
       <button
         type="submit"
@@ -88,9 +86,7 @@ export default function AdminLoginForm() {
       </button>
 
       {adminLoginPhase === 'google-signin' && (
-        <p className="text-xs text-slate-500 text-center">
-          {t('auth.googleSignInPopupHint')}
-        </p>
+        <p className="text-xs text-slate-500 text-center">{t('auth.googleSignInPopupHint')}</p>
       )}
     </form>
   );

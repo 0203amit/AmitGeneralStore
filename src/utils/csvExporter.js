@@ -31,7 +31,7 @@ function escapeCsvField(value) {
 export function generateCsvString(records) {
   const headerLine = HEADER_ROW.map(escapeCsvField).join(',');
   const dataLines = records.map((record) =>
-    HEADER_ROW.map((col) => escapeCsvField(record[col])).join(',')
+    HEADER_ROW.map((col) => escapeCsvField(record[col])).join(','),
   );
   return [headerLine, ...dataLines].join('\r\n');
 }

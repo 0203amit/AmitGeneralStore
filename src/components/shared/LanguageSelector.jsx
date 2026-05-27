@@ -15,7 +15,8 @@ export default function LanguageSelector() {
         <button
           key={code}
           onClick={() => i18n.changeLanguage(code)}
-          className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
+          aria-label={code === 'en' ? 'Switch to English' : 'हिंदी में बदलें'}
+          className={`flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-full text-xs font-medium transition-colors duration-200 ${
             currentLang === code
               ? 'bg-brand-primary text-white'
               : 'text-slate-500 hover:text-slate-700'

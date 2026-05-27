@@ -31,3 +31,5 @@ npm-debug.log*
 # Misc
 *.tmp
 .vercel
+test-results/
+playwright-report/

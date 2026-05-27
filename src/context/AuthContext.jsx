@@ -13,7 +13,7 @@ function saveAdminSession(userInfo) {
   try {
     localStorage.setItem(
       ADMIN_SESSION_KEY,
-      JSON.stringify({ name: userInfo.name, email: userInfo.email, isAdmin: true })
+      JSON.stringify({ name: userInfo.name, email: userInfo.email, isAdmin: true }),
     );
   } catch {
     // localStorage may be unavailable in some contexts
@@ -69,10 +69,7 @@ export function AuthProvider({ children }) {
       googleAuth.setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
 
       setProvisioning(true);
-      const [folders, sheetId] = await Promise.all([
-        ensureAppFolder(),
-        ensureAppSheet(),
-      ]);
+      const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
       setUser({ name: adminUser.name, email: adminUser.email, picture: null });
@@ -145,26 +142,20 @@ export function AuthProvider({ children }) {
         if (!hasSheetsScope) missing.push('Google Sheets');
         setError(
           `Access to ${missing.join(' and ')} was not granted. ` +
-          'Please sign in again and allow all requested permissions.'
+            'Please sign in again and allow all requested permissions.',
         );
         setLoading(false);
         return;
       }
 
-      googleAuth.setAccessToken(
-        tokenResponse.access_token,
-        tokenResponse.expires_in
-      );
+      googleAuth.setAccessToken(tokenResponse.access_token, tokenResponse.expires_in);
 
       const userInfo = await googleAuth.fetchUserInfo(tokenResponse.access_token);
       setUser(userInfo);
 
       // Provision Drive folders and Sheet (idempotent)
       setProvisioning(true);
-      const [folders, sheetId] = await Promise.all([
-        ensureAppFolder(),
-        ensureAppSheet(),
-      ]);
+      const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
       setProvisioning(false);
@@ -242,7 +233,7 @@ export function AuthProvider({ children }) {
         if (!hasSheetsScope) missing.push('Google Sheets');
         throw new Error(
           `Access to ${missing.join(' and ')} was not granted. ` +
-          'Please sign in again and allow all requested permissions.'
+            'Please sign in again and allow all requested permissions.',
         );
       }
 
@@ -253,10 +244,7 @@ export function AuthProvider({ children }) {
       const googleUserInfo = await googleAuth.fetchUserInfo(tokenResponse.access_token);
 
       setProvisioning(true);
-      const [folders, sheetId] = await Promise.all([
-        ensureAppFolder(),
-        ensureAppSheet(),
-      ]);
+      const [folders, sheetId] = await Promise.all([ensureAppFolder(), ensureAppSheet()]);
       setFolderIds(folders);
       setSpreadsheetId(sheetId);
       setUser({
@@ -271,8 +259,7 @@ export function AuthProvider({ children }) {
       saveAdminSession(adminUser);
     } catch (err) {
       console.error('Admin sign-in failed:', err);
-      const msg =
-        err?.result?.error?.message || err?.message || 'Admin sign-in failed';
+      const msg = err?.result?.error?.message || err?.message || 'Admin sign-in failed';
       setError(msg);
       googleAuth.clearAuth();
       clearFolderCache();
@@ -315,9 +302,5 @@ export function AuthProvider({ children }) {
     isAdminLoginAvailable: import.meta.env.VITE_ADMIN_LOGIN_ENABLED === 'true',
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

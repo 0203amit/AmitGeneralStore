@@ -28,9 +28,7 @@ export function ToastProvider({ children }) {
   }, []);
 
   const removeToast = useCallback((id) => {
-    setToasts((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, dismissing: true } : t))
-    );
+    setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, dismissing: true } : t)));
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 200);
@@ -45,11 +43,7 @@ export function ToastProvider({ children }) {
         aria-atomic="true"
       >
         {toasts.map((toast) => (
-          <ToastItem
-            key={toast.id}
-            toast={toast}
-            onDismiss={() => removeToast(toast.id)}
-          />
+          <ToastItem key={toast.id} toast={toast} onDismiss={() => removeToast(toast.id)} />
         ))}
       </div>
     </ToastContext.Provider>

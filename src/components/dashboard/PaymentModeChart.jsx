@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   PieChart,
@@ -42,6 +42,15 @@ const PAYMENT_MODE_COLORS = {
  */
 export default function PaymentModeChart({ records }) {
   const { t } = useTranslation();
+
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mq.matches);
+    const handler = (e) => setPrefersReducedMotion(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const { modeData, traderData } = useMemo(() => {
     // Payment mode distribution (count by mode)
@@ -95,9 +104,8 @@ export default function PaymentModeChart({ records }) {
                 outerRadius={90}
                 dataKey="value"
                 paddingAngle={2}
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
+                isAnimationActive={!prefersReducedMotion}
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
               >
                 {modeData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
@@ -109,9 +117,7 @@ export default function PaymentModeChart({ records }) {
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <p className="py-10 text-center text-sm text-slate-400">
-            {t('dashboard.noPaymentData')}
-          </p>
+          <p className="py-10 text-center text-sm text-slate-400">{t('dashboard.noPaymentData')}</p>
         )}
       </div>
 
@@ -122,32 +128,21 @@ export default function PaymentModeChart({ records }) {
         </h3>
         {traderData.length > 0 ? (
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart
-              data={traderData}
-              layout="vertical"
-              margin={{ left: 10, right: 20 }}
-            >
+            <BarChart data={traderData} layout="vertical" margin={{ left: 10, right: 20 }}>
               <XAxis
                 type="number"
                 tickFormatter={(v) => `\u20B9${formatCurrency(v)}`}
                 tick={{ fontSize: 11 }}
               />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={100}
-                tick={{ fontSize: 12 }}
-              />
+              <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(value) => [`\u20B9${formatCurrency(value)}`, t('dashboard.totalSpend')]}
               />
-              <Bar dataKey="total" fill="#3C3489" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="total" fill="#3C3489" radius={[0, 4, 4, 0]} isAnimationActive={!prefersReducedMotion} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <p className="py-10 text-center text-sm text-slate-400">
-            {t('dashboard.noTraderData')}
-          </p>
+          <p className="py-10 text-center text-sm text-slate-400">{t('dashboard.noTraderData')}</p>
         )}
       </div>
     </div>

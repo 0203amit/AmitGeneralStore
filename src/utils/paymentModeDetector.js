@@ -54,9 +54,11 @@ export function detectPaymentMode(text) {
   const hasDebitAccount = /debit\s*account/i.test(text);
   const hasCreditAccount = /credit\s*account/i.test(text);
 
-  if ((hasIfsc && hasBeneficiary) ||
-      (hasDebitAccount && hasCreditAccount) ||
-      (hasIfsc && hasDebitAccount)) {
+  if (
+    (hasIfsc && hasBeneficiary) ||
+    (hasDebitAccount && hasCreditAccount) ||
+    (hasIfsc && hasDebitAccount)
+  ) {
     return { mode: 'neft', confidence: 0.7 };
   }
 
@@ -68,9 +70,11 @@ export function detectPaymentMode(text) {
   const hasUtr = /\butr\b/i.test(text);
   const hasPoweredBy = /powered\s*by/i.test(text);
 
-  if ((hasTransactionSuccessful && hasPaidTo && hasDebitedFrom) ||
-      (hasPaidTo && hasDebitedFrom && hasUtr) ||
-      (hasTransactionSuccessful && hasPaidTo && hasPoweredBy)) {
+  if (
+    (hasTransactionSuccessful && hasPaidTo && hasDebitedFrom) ||
+    (hasPaidTo && hasDebitedFrom && hasUtr) ||
+    (hasTransactionSuccessful && hasPaidTo && hasPoweredBy)
+  ) {
     return { mode: 'phonepe', confidence: 0.7 };
   }
 

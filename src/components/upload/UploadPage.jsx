@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import useUpload from '../../hooks/useUpload';
@@ -61,9 +61,7 @@ export default function UploadPage() {
   return (
     <div className="px-4 py-6 sm:py-8">
       <h1 className="font-heading text-2xl font-bold text-slate-900">{t('upload.title')}</h1>
-      <p className="mt-1 text-sm text-slate-500">
-        {t('upload.subtitle')}
-      </p>
+      <p className="mt-1 text-sm text-slate-500">{t('upload.subtitle')}</p>
 
       {/* Error banner */}
       {error && (
@@ -213,29 +211,73 @@ export default function UploadPage() {
 /** Modal shown when a duplicate composite key is detected. */
 function DuplicateModal({ existingRecord, onViewExisting, onSaveAnyway, onCancel }) {
   const { t } = useTranslation();
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const firstBtn = dialog.querySelector('button');
+    firstBtn?.focus();
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        onCancel();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusable = dialog.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onCancel]);
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md animate-scaleIn rounded-lg bg-white p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-black/50 p-4"
+      onClick={onCancel}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="duplicate-modal-title"
+        className="w-full max-w-md animate-scaleIn rounded-lg bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 flex-shrink-0 text-amber-500" />
-          <h2 className="font-heading text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
+          <h2 id="duplicate-modal-title" className="font-heading text-lg font-semibold text-slate-900">
+            {t('duplicate.title')}
+          </h2>
         </div>
-        <p className="mt-3 text-sm text-slate-600">
-          {t('duplicate.message')}
-        </p>
+        <p className="mt-3 text-sm text-slate-600">{t('duplicate.message')}</p>
         <div className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
           <p>
-            <span className="font-medium">{t('duplicate.trader')}</span> {existingRecord.trader_name}
+            <span className="font-medium">{t('duplicate.trader')}</span>{' '}
+            {existingRecord.trader_name}
           </p>
           <p>
-            <span className="font-medium">{t('duplicate.invoice')}</span> {existingRecord.invoice_number}
+            <span className="font-medium">{t('duplicate.invoice')}</span>{' '}
+            {existingRecord.invoice_number}
           </p>
           <p>
             <span className="font-medium">{t('duplicate.date')}</span> {existingRecord.bill_date}
           </p>
           <p>
-            <span className="font-medium">{t('duplicate.amount')}</span> ₹{existingRecord.bill_amount}
+            <span className="font-medium">{t('duplicate.amount')}</span> ₹
+            {existingRecord.bill_amount}
           </p>
         </div>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">

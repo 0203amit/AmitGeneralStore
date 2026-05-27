@@ -6,7 +6,15 @@
  */
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpDown, ArrowUp, ArrowDown, Copy, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Copy,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { formatDisplayDate, formatCurrency } from '../../utils/dateHelpers';
 import { useToast } from '../shared/Toast';
 
@@ -77,14 +85,29 @@ export default function RecordsTable({
     });
   }
 
-  function SortIcon({ field }) {
-    if (sortBy !== field) return <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />;
-    return sortDir === 'asc'
-      ? <ArrowUp className="h-3.5 w-3.5 text-brand-primary" />
-      : <ArrowDown className="h-3.5 w-3.5 text-brand-primary" />;
+  function renderSortIcon(field) {
+    if (sortBy !== field) {
+      return (
+        <>
+          <ArrowUpDown className="h-3.5 w-3.5 text-slate-500" />
+          <span className="sr-only">{t('history.sortable', 'Sortable')}</span>
+        </>
+      );
+    }
+    return sortDir === 'asc' ? (
+      <>
+        <ArrowUp className="h-3.5 w-3.5 text-brand-primary" />
+        <span className="sr-only">{t('history.sortedAsc', 'Sorted ascending')}</span>
+      </>
+    ) : (
+      <>
+        <ArrowDown className="h-3.5 w-3.5 text-brand-primary" />
+        <span className="sr-only">{t('history.sortedDesc', 'Sorted descending')}</span>
+      </>
+    );
   }
 
-  function SortableHeader({ field, children, className = '' }) {
+  function renderSortableHeader(field, children, className = '') {
     return (
       <th
         className={`cursor-pointer select-none px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 transition hover:text-brand-primary ${className}`}
@@ -92,7 +115,7 @@ export default function RecordsTable({
       >
         <div className="flex items-center gap-1">
           {children}
-          <SortIcon field={field} />
+          {renderSortIcon(field)}
         </div>
       </th>
     );
@@ -121,17 +144,20 @@ export default function RecordsTable({
                   <input
                     type="checkbox"
                     checked={records.length > 0 && selectedIds?.size === records.length}
-                    onChange={(e) => { e.stopPropagation(); onToggleSelectAll?.(); }}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onToggleSelectAll?.();
+                    }}
                     className="rounded border-slate-300 text-brand-primary focus:ring-brand-primary"
                   />
                 </th>
               )}
-              <SortableHeader field="bill_date">{t('history.date')}</SortableHeader>
-              <SortableHeader field="trader_name">{t('history.trader')}</SortableHeader>
+              {renderSortableHeader('bill_date', t('history.date'))}
+              {renderSortableHeader('trader_name', t('history.trader'))}
               <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                 {t('history.invoice')}
               </th>
-              <SortableHeader field="bill_amount">{t('history.amount')}</SortableHeader>
+              {renderSortableHeader('bill_amount', t('history.amount'))}
               <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
                 {t('history.mode')}
               </th>
@@ -147,8 +173,16 @@ export default function RecordsTable({
             {records.map((record) => (
               <tr
                 key={record.record_id}
+                tabIndex={0}
+                role="link"
                 onClick={() => navigate(`/history/${record.record_id}`)}
-                className="cursor-pointer transition-colors duration-150 hover:bg-slate-50"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/history/${record.record_id}`);
+                  }
+                }}
+                className="cursor-pointer transition-colors duration-150 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-primary"
               >
                 {onToggleSelect && (
                   <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
@@ -171,6 +205,7 @@ export default function RecordsTable({
                     onClick={(e) => handleCopyInvoice(e, record.invoice_number)}
                     className="group inline-flex items-center gap-1 hover:text-brand-primary"
                     title={t('history.clickToCopy')}
+                    aria-label={`${t('history.clickToCopy')}: ${record.invoice_number || ''}`}
                   >
                     {record.invoice_number || '\u2014'}
                     <Copy className="h-3 w-3 opacity-0 transition group-hover:opacity-100" />
@@ -225,7 +260,15 @@ export default function RecordsTable({
               )}
               <div
                 className="flex-1 cursor-pointer"
+                role="link"
+                tabIndex={0}
                 onClick={() => navigate(`/history/${record.record_id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/history/${record.record_id}`);
+                  }
+                }}
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -279,7 +322,9 @@ export default function RecordsTable({
               className="rounded border border-slate-200 px-1.5 py-0.5 text-sm focus:border-brand-primary focus:outline-none"
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
-                <option key={size} value={size}>{size}</option>
+                <option key={size} value={size}>
+                  {size}
+                </option>
               ))}
             </select>
           </label>
@@ -289,7 +334,8 @@ export default function RecordsTable({
           <button
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
-            className="rounded-md border border-slate-200 p-1.5 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label={t('history.previousPage', 'Previous page')}
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -302,7 +348,9 @@ export default function RecordsTable({
               <button
                 key={p}
                 onClick={() => onPageChange(p)}
-                className={`rounded-md border px-2.5 py-1 text-sm transition ${
+                aria-label={`${t('history.page', 'Page')} ${p}`}
+                aria-current={p === page ? 'page' : undefined}
+                className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border text-sm transition ${
                   p === page
                     ? 'border-brand-primary bg-brand-primary text-white shadow-sm'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -310,12 +358,13 @@ export default function RecordsTable({
               >
                 {p}
               </button>
-            )
+            ),
           )}
           <button
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
-            className="rounded-md border border-slate-200 p-1.5 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label={t('history.nextPage', 'Next page')}
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-slate-200 text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
