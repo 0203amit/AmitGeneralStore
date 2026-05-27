@@ -60,7 +60,7 @@ export default function UploadPage() {
 
   return (
     <div className="px-4 py-6 sm:py-8">
-      <h1 className="text-2xl font-bold text-slate-900">{t('upload.title')}</h1>
+      <h1 className="font-heading text-2xl font-bold text-slate-900">{t('upload.title')}</h1>
       <p className="mt-1 text-sm text-slate-500">
         {t('upload.subtitle')}
       </p>
@@ -74,13 +74,13 @@ export default function UploadPage() {
 
       {/* Success state */}
       {step === 'done' && (
-        <div className="mt-8 flex flex-col items-center gap-4 rounded-lg border border-green-200 bg-green-50 p-8">
-          <CheckCircle className="h-12 w-12 text-green-600" />
-          <p className="text-lg font-medium text-green-800">{t('upload.savedSuccess')}</p>
+        <div className="mt-8 flex flex-col items-center gap-4 rounded-lg border border-brand-green/20 bg-brand-greenLight p-8">
+          <CheckCircle className="h-12 w-12 text-brand-green" />
+          <p className="text-lg font-medium text-brand-green">{t('upload.savedSuccess')}</p>
           <button
             type="button"
             onClick={reset}
-            className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="cursor-pointer rounded-lg bg-brand-primary px-6 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-primary/90"
           >
             {t('upload.uploadAnother')}
           </button>
@@ -133,7 +133,7 @@ export default function UploadPage() {
                 type="button"
                 onClick={extractAndReview}
                 disabled={!canExtract}
-                className="flex items-center gap-2 rounded-lg bg-indigo-600 px-8 py-3 text-sm font-medium text-white shadow transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-2 rounded-lg bg-brand-primary px-8 py-3 text-sm font-medium text-white shadow transition-colors duration-200 hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <FileText className="h-4 w-4" />
                 {t('upload.extractAndReview')}
@@ -156,7 +156,7 @@ export default function UploadPage() {
           {(step === 'review' || step === 'saving') && billFields && paymentFields && (
             <>
               <div className="mt-8">
-                <h2 className="mb-4 text-lg font-semibold text-slate-800">
+                <h2 className="font-heading mb-4 text-lg font-semibold text-slate-800">
                   {t('upload.reviewExtractedFields')}
                 </h2>
                 <ExtractionForm
@@ -174,7 +174,7 @@ export default function UploadPage() {
                   type="button"
                   onClick={() => save(false)}
                   disabled={step === 'saving' || !canSave}
-                  className="flex items-center gap-2 rounded-lg bg-green-600 px-8 py-3 text-sm font-medium text-white shadow transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex cursor-pointer items-center gap-2 rounded-lg bg-brand-green px-8 py-3 text-sm font-medium text-white shadow transition-colors duration-200 hover:bg-brand-green/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {step === 'saving' ? (
                     <>
@@ -215,11 +215,11 @@ function DuplicateModal({ existingRecord, onViewExisting, onSaveAnyway, onCancel
   const { t } = useTranslation();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md animate-scaleIn rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 flex-shrink-0 text-amber-500" />
-          <h2 className="text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
+          <h2 className="font-heading text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600">
           {t('duplicate.message')}
@@ -242,21 +242,21 @@ function DuplicateModal({ existingRecord, onViewExisting, onSaveAnyway, onCancel
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="cursor-pointer rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-100"
           >
             {t('common.cancel')}
           </button>
           <button
             type="button"
             onClick={onViewExisting}
-            className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+            className="cursor-pointer rounded-md border border-brand-primary px-4 py-2 text-sm font-medium text-brand-primary transition-colors duration-200 hover:bg-brand-primaryLight"
           >
             {t('duplicate.viewExisting')}
           </button>
           <button
             type="button"
             onClick={onSaveAnyway}
-            className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600"
+            className="cursor-pointer rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-amber-600"
           >
             {t('duplicate.saveAnyway')}
           </button>

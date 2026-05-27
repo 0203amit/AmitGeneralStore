@@ -45,7 +45,7 @@ export default function CameraCapture({
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={disabled}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-600 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-600 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-brand-primary bg-brand-primaryLight px-4 py-3 text-sm font-medium text-brand-primary transition-colors duration-200 hover:bg-brand-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Camera className="h-4 w-4" />
         {label || t('upload.takePhoto')}

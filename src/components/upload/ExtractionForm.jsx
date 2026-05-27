@@ -34,10 +34,10 @@ function FieldInput({ label, value, onChange, confidence, type = 'text', require
       })()
     : null;
 
-  const baseInputClass = `w-full rounded-md border px-3 py-2 text-sm transition focus:outline-none focus:ring-2 ${
+  const baseInputClass = `w-full rounded-md border px-3 py-2 text-sm transition-colors duration-200 focus:outline-none focus:ring-2 ${
     isLowConfidence
       ? 'border-amber-300 bg-amber-50 focus:border-amber-500 focus:ring-amber-200'
-      : 'border-slate-300 bg-white focus:border-indigo-500 focus:ring-indigo-200'
+      : 'border-slate-300 bg-white focus:border-brand-primary focus:ring-brand-primary/30'
   } disabled:cursor-not-allowed disabled:bg-slate-100`;
 
   return (
@@ -107,7 +107,7 @@ export default function ExtractionForm({
     <div className="space-y-6">
       {/* Bill Fields */}
       <fieldset className="rounded-lg border border-slate-200 p-4">
-        <legend className="px-2 text-sm font-semibold text-slate-800">{t('extraction.billDetails')}</legend>
+        <legend className="px-2 font-heading text-base font-semibold text-slate-800">{t('extraction.billDetails')}</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <FieldInput
             label={t('extraction.traderName')}
@@ -162,7 +162,7 @@ export default function ExtractionForm({
 
       {/* Payment Fields */}
       <fieldset className="rounded-lg border border-slate-200 p-4">
-        <legend className="px-2 text-sm font-semibold text-slate-800">{t('extraction.paymentDetails')}</legend>
+        <legend className="px-2 font-heading text-base font-semibold text-slate-800">{t('extraction.paymentDetails')}</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           {paymentFields.payment_mode === 'gpay' ? (
             <>
@@ -215,7 +215,7 @@ export default function ExtractionForm({
               value={paymentFields.payment_mode}
               onChange={(e) => onPaymentFieldChange('payment_mode', e.target.value)}
               disabled={disabled}
-              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm transition-colors duration-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:bg-slate-100"
             >
               {PAYMENT_MODE_OPTIONS.map(({ value, label }) => (
                 <option key={value} value={value}>

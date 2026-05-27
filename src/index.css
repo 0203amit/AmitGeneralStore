@@ -10,7 +10,7 @@ html {
 }
 
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-slate-50 font-body text-slate-900 antialiased;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -19,7 +19,7 @@ body {
 
 /* react-datepicker Tailwind overrides */
 .react-datepicker {
-  @apply border-slate-200 font-sans text-sm shadow-lg;
+  @apply border-slate-200 font-body text-sm shadow-lg;
 }
 
 .react-datepicker__header {
@@ -28,11 +28,11 @@ body {
 
 .react-datepicker__day--selected,
 .react-datepicker__day--keyboard-selected {
-  @apply bg-indigo-500;
+  @apply bg-brand-primary;
 }
 
 .react-datepicker__day:hover {
-  @apply bg-indigo-100;
+  @apply bg-brand-primaryLight;
 }
 
 .react-datepicker-popper {
@@ -45,4 +45,13 @@ body {
 
 .datepicker-amber .react-datepicker__input-container input:focus {
   @apply border-amber-500 ring-amber-200;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

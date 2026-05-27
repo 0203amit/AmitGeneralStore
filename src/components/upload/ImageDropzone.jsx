@@ -70,12 +70,12 @@ export default function ImageDropzone({
   // Preview state: show image with Replace/Remove actions
   if (previewUrl) {
     return (
-      <div className="rounded-lg border-2 border-indigo-200 bg-white p-3">
+      <div className="rounded-lg border-2 border-brand-primary/20 bg-white p-3">
         <p className="mb-2 text-sm font-medium text-slate-700">{label}</p>
         <img
           src={previewUrl}
           alt={`${label} preview`}
-          className="max-h-64 w-full rounded object-contain bg-slate-50"
+          className="max-h-64 w-full rounded bg-slate-50 object-contain"
         />
         <div className="mt-2 flex gap-2">
           <input
@@ -89,7 +89,7 @@ export default function ImageDropzone({
             type="button"
             onClick={() => replaceInputRef.current?.click()}
             disabled={disabled}
-            className="flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-indigo-600 hover:bg-indigo-50 disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-brand-primary transition-colors duration-200 hover:bg-brand-primaryLight disabled:opacity-50"
           >
             <RefreshCw className="h-3.5 w-3.5" /> {t('upload.replace')}
           </button>
@@ -97,7 +97,7 @@ export default function ImageDropzone({
             type="button"
             onClick={onRemove}
             disabled={disabled}
-            className="flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-red-600 transition-colors duration-200 hover:bg-red-50 disabled:opacity-50"
           >
             <X className="h-3.5 w-3.5" /> {t('upload.remove')}
           </button>
@@ -124,10 +124,10 @@ export default function ImageDropzone({
       {/* Drag-and-drop / browse zone */}
       <div
         {...getRootProps()}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors duration-200 ${
           isDragActive
-            ? 'border-indigo-500 bg-indigo-50'
-            : 'border-slate-300 bg-slate-50 hover:border-indigo-300'
+            ? 'border-brand-primary bg-brand-primaryLight'
+            : 'border-slate-300 bg-slate-50 hover:border-brand-primary/60 hover:bg-brand-primaryLight/50'
         } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
       >
         <input {...getInputProps()} />

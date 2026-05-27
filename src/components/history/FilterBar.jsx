@@ -170,7 +170,7 @@ export default function FilterBar({
         </div>
         <button
           onClick={() => setShowFilters((prev) => !prev)}
-          className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
+          className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
             hasActiveFilters
               ? 'border-brand-primary bg-brand-primary/5 text-brand-primary'
               : 'border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -197,7 +197,7 @@ export default function FilterBar({
               {chip.label}
               <button
                 onClick={() => removeChip(chip.type, chip.value)}
-                className="ml-0.5 hover:text-red-600"
+                className="ml-0.5 cursor-pointer transition-colors duration-150 hover:text-red-600"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -205,7 +205,7 @@ export default function FilterBar({
           ))}
           <button
             onClick={clearAllFilters}
-            className="text-xs font-medium text-slate-500 hover:text-red-600"
+            className="cursor-pointer text-xs font-medium text-slate-500 transition-colors duration-150 hover:text-red-600"
           >
             {t('history.clearAll')}
           </button>
@@ -214,7 +214,7 @@ export default function FilterBar({
 
       {/* Expanded filter panel */}
       {showFilters && (
-        <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="animate-slideDown rounded-lg border border-slate-200 bg-white p-4">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Date range */}
             <div>
@@ -227,7 +227,7 @@ export default function FilterBar({
                   <button
                     key={preset.value}
                     onClick={() => applyPreset(preset.value)}
-                    className="rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 transition hover:border-brand-primary hover:text-brand-primary"
+                    className="cursor-pointer rounded-md border border-slate-200 px-2 py-1 text-xs text-slate-600 transition-colors duration-200 hover:border-brand-primary hover:text-brand-primary"
                   >
                     {t(preset.labelKey)}
                   </button>
@@ -331,7 +331,7 @@ export default function FilterBar({
                 <ChevronDown className="h-3.5 w-3.5" />
               </button>
               {traderDropdownOpen && (
-                <div className="absolute z-30 mt-1 max-h-48 w-56 overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                <div className="absolute z-30 mt-1 max-h-48 w-56 animate-fadeIn overflow-y-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
                   {uniqueTraders.length === 0 ? (
                     <p className="px-3 py-2 text-xs text-slate-400">{t('history.noTradersFound')}</p>
                   ) : (

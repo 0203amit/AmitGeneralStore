@@ -398,7 +398,7 @@ export default function RecordDetail() {
             <>
               <button
                 onClick={handleStartEdit}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 {t('common.edit')}
@@ -406,7 +406,7 @@ export default function RecordDetail() {
               <button
                 onClick={() => setShowArchiveDialog(true)}
                 disabled={archiving}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50 disabled:opacity-50"
               >
                 <Archive className="h-3.5 w-3.5" />
                 {t('common.archive')}
@@ -417,7 +417,7 @@ export default function RecordDetail() {
             <button
               onClick={handleRestore}
               disabled={archiving}
-              className="flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition hover:bg-green-100 disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 transition-colors duration-200 hover:bg-green-100 disabled:opacity-50"
             >
               {archiving ? (
                 <>
@@ -437,7 +437,7 @@ export default function RecordDetail() {
 
       {/* Title */}
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
+        <h1 className="font-heading text-xl font-bold text-slate-900 sm:text-2xl">
           {editMode ? (editFields.trader_name || t('history.unknownTrader')) : (record.trader_name || t('history.unknownTrader'))}
         </h1>
         <p className="mt-1 text-sm text-slate-500">
@@ -456,7 +456,7 @@ export default function RecordDetail() {
             <button
               onClick={handleCancelEdit}
               disabled={saving}
-              className="flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-50 disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" />
               {t('common.cancel')}
@@ -464,7 +464,7 @@ export default function RecordDetail() {
             <button
               onClick={handleSaveEdit}
               disabled={saving}
-              className="flex items-center gap-1.5 rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white transition hover:bg-brand-primary/90 disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-1.5 rounded-md bg-brand-primary px-3 py-1.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -485,7 +485,7 @@ export default function RecordDetail() {
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Bill fields */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <FileText className="h-4 w-4" />
             {t('detail.billDetails')}
@@ -535,7 +535,7 @@ export default function RecordDetail() {
         </div>
 
         {/* Payment fields */}
-        <div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-6">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
             <CreditCard className="h-4 w-4" />
             {t('detail.paymentDetails')}
@@ -646,7 +646,7 @@ export default function RecordDetail() {
                   <img
                     src={billImageUrl}
                     alt="Bill"
-                    className="w-full rounded-lg border border-slate-200 object-contain"
+                    className="w-full rounded-lg border border-slate-200 object-contain transition-opacity duration-200 hover:opacity-90"
                   />
                 ) : (
                   <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
@@ -678,7 +678,7 @@ export default function RecordDetail() {
                   <img
                     src={paymentImageUrl}
                     alt="Payment receipt"
-                    className="w-full rounded-lg border border-slate-200 object-contain"
+                    className="w-full rounded-lg border border-slate-200 object-contain transition-opacity duration-200 hover:opacity-90"
                   />
                 ) : (
                   <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50">
@@ -751,7 +751,7 @@ export default function RecordDetail() {
               <button
                 onClick={handleGenerateProofPacket}
                 disabled={pdfGenerating}
-                className="flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-primary/90 disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-2 rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-primary/90 disabled:opacity-50"
               >
                 {pdfGenerating ? (
                   <>
@@ -768,21 +768,21 @@ export default function RecordDetail() {
               <button
                 onClick={handleShareWhatsApp}
                 disabled={pdfGenerating}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50 disabled:opacity-50"
               >
                 <Share2 className="h-4 w-4" />
                 {t('detail.shareWhatsApp')}
               </button>
               <button
                 onClick={handleShareEmail}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50"
               >
                 <Mail className="h-4 w-4" />
                 {t('detail.shareEmail')}
               </button>
               <button
                 onClick={handleCopyProofSummary}
-                className="flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50"
               >
                 <Copy className="h-4 w-4" />
                 {t('detail.copySummary')}
@@ -877,7 +877,7 @@ function DetailRow({ label, value, warn = false, readOnly = false }) {
 function EditRow({ label, type, value, onChange, options, placeholder }) {
   const { t } = useTranslation();
   const inputClass =
-    'w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-900 focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary';
+    'w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-900 transition-colors duration-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30';
   const isDate = type === 'date';
 
   const dateValue = isDate && value
@@ -946,11 +946,11 @@ function EditRow({ label, type, value, onChange, options, placeholder }) {
 function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChange, archiving }) {
   const { t } = useTranslation();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md animate-scaleIn rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <Archive className="h-6 w-6 flex-shrink-0 text-slate-500" />
-          <h2 className="text-lg font-semibold text-slate-900">{t('archiveDialog.title')}</h2>
+          <h2 className="font-heading text-lg font-semibold text-slate-900">{t('archiveDialog.title')}</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600">
           {t('archiveDialog.message')}
@@ -973,7 +973,7 @@ function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChan
             type="button"
             onClick={onCancel}
             disabled={archiving}
-            className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+            className="cursor-pointer rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-100 disabled:opacity-50"
           >
             {t('common.cancel')}
           </button>
@@ -981,7 +981,7 @@ function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChan
             type="button"
             onClick={onConfirm}
             disabled={archiving}
-            className="flex items-center justify-center gap-2 rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-md bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-slate-800 disabled:opacity-50"
           >
             {archiving ? (
               <>
@@ -1002,11 +1002,11 @@ function ArchiveConfirmDialog({ onConfirm, onCancel, archiveReason, onReasonChan
 function DuplicateEditModal({ existingRecord, onViewExisting, onDismiss }) {
   const { t } = useTranslation();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+    <div className="fixed inset-0 z-50 flex animate-fadeIn items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md animate-scaleIn rounded-lg bg-white p-6 shadow-xl">
         <div className="flex items-center gap-3">
           <AlertTriangle className="h-6 w-6 flex-shrink-0 text-amber-500" />
-          <h2 className="text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
+          <h2 className="font-heading text-lg font-semibold text-slate-900">{t('duplicate.title')}</h2>
         </div>
         <p className="mt-3 text-sm text-slate-600">
           {t('duplicate.editMessage')}
@@ -1029,14 +1029,14 @@ function DuplicateEditModal({ existingRecord, onViewExisting, onDismiss }) {
           <button
             type="button"
             onClick={onDismiss}
-            className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="cursor-pointer rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition-colors duration-200 hover:bg-slate-100"
           >
             {t('common.ok')}
           </button>
           <button
             type="button"
             onClick={onViewExisting}
-            className="rounded-md border border-indigo-600 px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50"
+            className="cursor-pointer rounded-md border border-brand-primary px-4 py-2 text-sm font-medium text-brand-primary transition-colors duration-200 hover:bg-brand-primaryLight"
           >
             {t('duplicate.viewExisting')}
           </button>

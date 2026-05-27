@@ -15,7 +15,7 @@ export default function LanguageSelector() {
         <button
           key={code}
           onClick={() => i18n.changeLanguage(code)}
-          className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+          className={`cursor-pointer rounded-full px-2.5 py-1 text-xs font-medium transition-colors duration-200 ${
             currentLang === code
               ? 'bg-brand-primary text-white'
               : 'text-slate-500 hover:text-slate-700'

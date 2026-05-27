@@ -148,7 +148,7 @@ export default function RecordsTable({
               <tr
                 key={record.record_id}
                 onClick={() => navigate(`/history/${record.record_id}`)}
-                className="cursor-pointer transition hover:bg-slate-50"
+                className="cursor-pointer transition-colors duration-150 hover:bg-slate-50"
               >
                 {onToggleSelect && (
                   <td className="px-3 py-3" onClick={(e) => e.stopPropagation()}>
@@ -210,7 +210,7 @@ export default function RecordsTable({
         {records.map((record) => (
           <div
             key={record.record_id}
-            className="rounded-lg border border-slate-200 bg-white p-3 transition active:bg-slate-50"
+            className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm transition-shadow duration-200 hover:shadow-md active:bg-slate-50"
           >
             <div className="flex gap-3">
               {onToggleSelect && (
@@ -304,7 +304,7 @@ export default function RecordsTable({
                 onClick={() => onPageChange(p)}
                 className={`rounded-md border px-2.5 py-1 text-sm transition ${
                   p === page
-                    ? 'border-brand-primary bg-brand-primary text-white'
+                    ? 'border-brand-primary bg-brand-primary text-white shadow-sm'
                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >

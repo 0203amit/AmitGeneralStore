@@ -60,11 +60,11 @@ export default function Navbar() {
   }, []);
 
   return (
-    <nav className="border-b border-slate-200 bg-white">
+    <nav className="border-b border-slate-200 bg-white shadow-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
         {/* Wordmark */}
         <div className="flex flex-col">
-          <span className="text-lg font-bold leading-tight text-brand-primary">
+          <span className="font-heading text-lg font-bold leading-tight text-brand-primary">
             {BUSINESS_NAME}
           </span>
           <span className="text-xs text-slate-500">{t('branding.tagline')}</span>
@@ -77,7 +77,7 @@ export default function Navbar() {
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition ${
+                `flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-200 ${
                   isActive
                     ? 'bg-brand-primary/10 text-brand-primary'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -95,7 +95,8 @@ export default function Navbar() {
           <LanguageSelector />
           <button
             onClick={() => setProfileOpen((prev) => !prev)}
-            className="flex items-center gap-2 rounded-full p-1 transition hover:bg-slate-100"
+            className="flex cursor-pointer items-center gap-2 rounded-full p-1 transition-colors duration-200 hover:bg-slate-100"
+            aria-label="User menu"
           >
             {user?.picture ? (
               <img
@@ -112,7 +113,7 @@ export default function Navbar() {
           </button>
 
           {profileOpen && (
-            <div className="absolute right-4 top-14 z-40 min-w-[200px] rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
+            <div className="absolute right-4 top-14 z-40 min-w-[200px] animate-fadeIn rounded-lg border border-slate-200 bg-white py-2 shadow-lg">
               <div className="border-b border-slate-100 px-4 pb-2">
                 <p className="text-sm font-medium text-slate-900">
                   {user?.name}
@@ -124,7 +125,7 @@ export default function Navbar() {
                   setProfileOpen(false);
                   setShowSignOutConfirm(true);
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-50 hover:text-red-600"
+                className="flex w-full cursor-pointer items-center gap-2 px-4 py-2 text-sm text-slate-600 transition-colors duration-200 hover:bg-slate-50 hover:text-red-600"
               >
                 <LogOut className="h-4 w-4" />
                 {t('common.signOut')}
@@ -136,8 +137,8 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMenuOpen((prev) => !prev)}
-          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 md:hidden"
-          aria-label="Toggle menu"
+          className="cursor-pointer rounded-md p-2 text-slate-600 transition-colors duration-200 hover:bg-slate-100 md:hidden"
+          aria-label="Toggle navigation menu"
         >
           {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -145,7 +146,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="border-t border-slate-200 bg-white px-4 pb-4 md:hidden">
+        <div className="animate-slideDown border-t border-slate-200 bg-white px-4 pb-4 md:hidden">
           <div className="flex flex-col gap-1 pt-2">
             {NAV_LINKS.filter(({ to }) => !isAdmin || to !== '/settings').map(({ to, labelKey, icon: Icon }) => (
               <NavLink
@@ -153,7 +154,7 @@ export default function Navbar() {
                 to={to}
                 onClick={() => setMenuOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition ${
+                  `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors duration-200 ${
                     isActive
                       ? 'bg-brand-primary/10 text-brand-primary'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -198,7 +199,7 @@ export default function Navbar() {
                 setMenuOpen(false);
                 setShowSignOutConfirm(true);
               }}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-red-600 transition-colors duration-200 hover:bg-red-50"
             >
               <LogOut className="h-4 w-4" />
               {t('common.signOut')}

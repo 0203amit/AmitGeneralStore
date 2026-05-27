@@ -46,7 +46,7 @@ export default function AdminLoginForm() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={isDisabled}
-          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm transition-colors duration-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
           placeholder={t('auth.enterUsername')}
         />
       </div>
@@ -62,7 +62,7 @@ export default function AdminLoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           disabled={isDisabled}
-          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-primary focus:outline-none focus:ring-1 focus:ring-brand-primary disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm transition-colors duration-200 focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
           placeholder={t('auth.enterPassword')}
         />
       </div>
@@ -74,7 +74,7 @@ export default function AdminLoginForm() {
       <button
         type="submit"
         disabled={isDisabled}
-        className="w-full rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full cursor-pointer rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors duration-200 hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {adminLoginPhase === 'verifying'
           ? t('auth.verifyingCredentials')

@@ -91,7 +91,7 @@ export default function MonthlySummary({ records }) {
         return (
           <div
             key={card.label}
-            className="rounded-lg border border-slate-200 bg-white p-5"
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-shadow duration-200 hover:shadow-md"
           >
             <div className="flex items-center gap-3">
               <div className={`rounded-lg p-2 ${card.bg}`}>
@@ -99,7 +99,7 @@ export default function MonthlySummary({ records }) {
               </div>
               <div>
                 <p className="text-sm text-slate-500">{card.label}</p>
-                <p className="text-xl font-semibold text-slate-900">
+                <p className="font-heading text-xl font-semibold text-slate-900">
                   {card.value}
                 </p>
               </div>

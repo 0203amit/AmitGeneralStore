@@ -73,7 +73,7 @@ export default function DashboardPage() {
   if (records.length === 0) {
     return (
       <div className="p-4 sm:p-8">
-        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
+        <h1 className="font-heading text-xl font-bold text-slate-900 sm:text-2xl">
           {t('dashboard.title')}
         </h1>
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-10 text-center">
@@ -86,7 +86,7 @@ export default function DashboardPage() {
           </p>
           <Link
             to="/upload"
-            className="mt-4 inline-block rounded-lg bg-brand-primary px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-primary/90"
+            className="mt-4 inline-block cursor-pointer rounded-lg bg-brand-primary px-5 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-primary/90"
           >
             {t('dashboard.uploadReceipt')}
           </Link>
@@ -101,11 +101,11 @@ export default function DashboardPage() {
         {t('dashboard.title')}
       </h1>
 
-      <div className="mt-6">
+      <div className="mt-6 animate-fadeIn">
         <MonthlySummary records={records} />
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 animate-fadeIn">
         <PaymentModeChart records={records} />
       </div>
     </div>

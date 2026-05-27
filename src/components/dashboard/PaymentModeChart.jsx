@@ -80,7 +80,7 @@ export default function PaymentModeChart({ records }) {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {/* Payment Mode Distribution */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold text-slate-700">
           {t('dashboard.paymentModeDistribution')}
         </h3>
@@ -116,7 +116,7 @@ export default function PaymentModeChart({ records }) {
       </div>
 
       {/* Top 5 Traders by Spend */}
-      <div className="rounded-lg border border-slate-200 bg-white p-5">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-4 text-sm font-semibold text-slate-700">
           {t('dashboard.topTradersBySpend')}
         </h3>

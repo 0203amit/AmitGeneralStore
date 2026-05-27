@@ -12,8 +12,8 @@ export default function SignInButton() {
   const { signIn, loading, isAdminLoginAvailable } = useAuth();
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <h1 className="text-4xl font-bold text-brand-primary sm:text-5xl">
+    <div className="flex animate-fadeIn flex-col items-center gap-6">
+      <h1 className="font-heading text-4xl font-bold text-brand-primary sm:text-5xl">
         {SIGN_IN_HEADLINE}
       </h1>
       <p className="text-lg text-slate-600">{t('branding.signInSubheadline')}</p>
@@ -21,7 +21,7 @@ export default function SignInButton() {
       <button
         onClick={signIn}
         disabled={loading}
-        className="mt-4 flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-700 shadow-sm transition-shadow duration-200 hover:bg-slate-50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg
           className="h-5 w-5"

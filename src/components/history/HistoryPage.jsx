@@ -233,7 +233,7 @@ export default function HistoryPage() {
     <div className="p-4 sm:p-8">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{t('history.title')}</h1>
+          <h1 className="font-heading text-xl font-bold text-slate-900 sm:text-2xl">{t('history.title')}</h1>
           <p className="mt-1 text-sm text-slate-500">
             {t('history.recordsFound', { count: totalFiltered })}
           </p>
@@ -251,7 +251,7 @@ export default function HistoryPage() {
           <button
             onClick={handleExportCsv}
             disabled={csvExporting}
-            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors duration-200 hover:bg-slate-50 disabled:opacity-50"
           >
             {csvExporting ? (
               <>
@@ -277,7 +277,7 @@ export default function HistoryPage() {
             <button
               onClick={() => setShowBulkExportConfirm(true)}
               disabled={bulkGenerating}
-              className="flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-primary/90 disabled:opacity-50"
+              className="flex cursor-pointer items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-brand-primary/90 disabled:opacity-50"
             >
               {bulkGenerating ? (
                 <>
