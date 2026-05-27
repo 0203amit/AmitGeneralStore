@@ -33,9 +33,9 @@ const CONTENT_WIDTH = PAGE_WIDTH - 2 * MARGIN;
 
 /* ── Private Helpers ─────────────────────────────────────────────────── */
 
-/** Shorthand for i18n.t to get current-language translation. */
+/** Shorthand for i18n.t — forces English for PDF (Helvetica can't render Devanagari). */
 function t(key, options) {
-  return i18n.t(key, options);
+  return i18n.t(key, { ...options, lng: 'en' });
 }
 
 /** Convert a Blob to a data URL string for jsPDF embedding. */
